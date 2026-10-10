@@ -20,6 +20,9 @@
 // @resource     element-plus  https://cdn.staticfile.org/element-plus/2.3.12/index.css
 // @resource     ttf           https://www.forestpolice.org/ttf/2.0/table.json
 // @connect      api.deepseek.com
+// @connect      openrouter.ai
+// @connect      aihubmix.com
+// @connect      api.siliconflow.cn
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        GM_getValue
