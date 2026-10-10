@@ -20,9 +20,27 @@
 // @resource     element-plus  https://cdn.staticfile.org/element-plus/2.3.12/index.css
 // @resource     ttf           https://www.forestpolice.org/ttf/2.0/table.json
 // @connect      api.deepseek.com
+// @connect      api.siliconflow.cn
 // @connect      openrouter.ai
 // @connect      aihubmix.com
-// @connect      api.siliconflow.cn
+// @connect      api.xiaomimimo.com
+// @connect      open.bigmodel.cn
+// @connect      api.moonshot.cn
+// @connect      dashscope.aliyuncs.com
+// @connect      api.hunyuan.cloud.tencent.com
+// @connect      spark-api-open.xf-yun.com
+// @connect      ark.cn-beijing.volces.com
+// @connect      qianfan.baidubce.com
+// @connect      api.minimaxi.com
+// @connect      api.stepfun.com
+// @connect      api.baichuan-ai.com
+// @connect      api.lingyiwanwu.com
+// @connect      api.longcat.chat
+// @connect      api.openai.com
+// @connect      api.x.ai
+// @connect      generativelanguage.googleapis.com
+// @connect      localhost
+// @connect      127.0.0.1
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        GM_getValue
