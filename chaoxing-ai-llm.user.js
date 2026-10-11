@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.2.5
+// @version      1.2.9
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -124,6 +124,9 @@
     async getAIAnswer(questionData) {
       defaultConfig = getConfig(); // 每次都重新读取最新配置（用户可能已更新 API Key）
       const apiKey = defaultConfig.thtoken || "";
+      // AI 请求超时（毫秒）：与 max_tokens=1000 匹配 —— 1000 token 的输出在 20s 内常来不及（尤其推理模型）。
+      // ⚠️ 必须与 _callAI 的 timeout 保持一致，故抽成常量，避免两处硬编码漂移。
+      const timeoutMs = 45000;
       // 支持多提供商：默认 DeepSeek V4 Flash，也可通过配置指定其他兼容端点
       const apiUrl = defaultConfig.aiApiUrl || "https://api.deepseek.com/v1/chat/completions";
       const model = defaultConfig.aiModel || "deepseek-v4-flash";
@@ -167,15 +170,23 @@
       if (!apiKey) { console.warn("[AI答题] API Key 为空"); return { form: "AI", answer: "", num: "", usenum: "" }; }
 
       // 重试循环：最多 3 次，指数退避 2/4/6 秒，429 额外等待 10 秒
+      // ★ 方案B：**超时不重试** —— 超时＝模型/网络慢，重试几乎必然再超时（3 次 × 45s = 135s 纯浪费）。
+      //   429 限流则仍重试（服务端过载，等一会儿确实可能恢复）。
       const MAX_RETRIES = 3;
       let lastError = null;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options);
+          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options, { timeoutMs: timeoutMs });
           if (result.retry === true) {
-            // 429 或超时，需要重试
+            if (result.isTimeout) {
+              // 超时直接放弃：不再重试，避免一题拖到 2 分钟以上
+              console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），不重试，本题按「无答案」处理");
+              lastError = result.reason;
+              break;
+            }
+            // 429 或其它可重试错误
             const waitSec = result.is429 ? 10 + attempt * 3 : attempt * 2;
-            console.warn("[AI答题] 第" + attempt + "次尝试失败" + (result.is429 ? "(429限流)" : "(超时)") + "，" + waitSec + "秒后重试...");
+            console.warn("[AI答题] 第" + attempt + "次尝试失败" + (result.is429 ? "(429限流)" : "") + "，" + waitSec + "秒后重试...");
             await new Promise(r => setTimeout(r, waitSec * 1000));
             lastError = result.reason;
             continue;
@@ -195,12 +206,14 @@
     // 内部方法：发起单次 AI API 调用
     _callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options) {
       return new Promise((resolve) => {
+        // 超时可由调用方经 options.timeoutMs 指定（默认 45s），保证与上层「超时不重试」判定用的是同一个值
+        const _timeoutMs = (options && options.timeoutMs) || 45000;
         _GM_xmlhttpRequest({
           method: "POST",
           url: apiUrl,
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + apiKey },
-          data: JSON.stringify({ model, stream: false, messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }], temperature: 0.1, max_tokens: 500 }),
-          timeout: 20000, // 降低到20秒，更快触发重试
+          data: JSON.stringify({ model, stream: false, messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }], temperature: 0.1, max_tokens: 1000 }),
+          timeout: _timeoutMs, // 与 max_tokens=1000 匹配：1000 token 的输出在 20s 内常来不及（尤其推理模型）→ 45s（由上层传入）
           onload: (res) => {
             console.log("[AI答题] HTTP", res.status, "长度", (res.responseText||"").length);
             if (res.status === 429 || res.status >= 500) {
@@ -224,6 +237,9 @@
               // 否则思维链里的英文字母(A/B/C/D)会被误当作选项，导致答案错误或为空
               ans = ans.replace(/[\s\S]*?<\/think>/gi, "").replace(/<\/?(?:think|thinking|reasoning)>/gi, "").trim();
               console.log("[AI答题] 原始返回:", ans);
+              // 诊断：内容为空多为「输出被 max_tokens 截断」或「输出全部消耗在思维链上」，
+              //   此时题目会拿不到答案（页面答案模型必然为空），排查先看这一行。
+              if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=1000 截断，或全部消耗在思维链里）→ 本题将无答案可填");
               // 选择题：字母 → 选项文本映射（matchAnswer 做文本精确匹配）
               if (type === 0) {
                 ans = (ans.match(/[A-Da-d]/) || [])[0] || ans;
@@ -259,8 +275,9 @@
               resolve({ form: "AI", answer: ans, num: promptTokens, usenum: completionTokens, totalTokens: totalTokens });
             } catch (e) { resolve({ form: "AI", answer: "", num: "", usenum: "" }); }
           },
+          // 超时标记：超时属于「模型慢」，重试大概率还是慢 → 由上层直接放弃（不浪费 3 倍时间）
           onerror: () => { resolve({ retry: true, is429: false, reason: "网络错误" }); },
-          ontimeout: () => { resolve({ retry: true, is429: false, reason: "超时" }); }
+          ontimeout: () => { resolve({ retry: true, is429: false, isTimeout: true, reason: "超时" }); }
         });
       });
     }
@@ -1987,48 +2004,71 @@
             this.askStore.log("页面答案模型校验：有 " + st0.missing.length + " 题未写入页面（第 " + st0.missing.map(function(o) { return o + 1; }).join("、") + " 题），正在补写…", "info");
             refillChoices();
             const st1 = choiceState();
-            if (st1.missing.length) this.askStore.log("补写后仍有 " + st1.missing.length + " 题为空（第 " + st1.missing.map(function(o) { return o + 1; }).join("、") + " 题），提交环节会再次补写；仍补不上则拒绝提交空白答案", "error");
+            if (st1.missing.length) this.askStore.log("补写后仍有 " + st1.missing.length + " 题为空（第 " + st1.missing.map(function(o) { return o + 1; }).join("、") + " 题），提交环节会再次补写；仍补不上则改为「临时保存」暂存（绝不提交空白卷）", "error");
             else this.askStore.log("页面答案模型已全部写入，提交不会触发“未做完”", "success");
           } else if (st0.total) {
             console.log("[答案模型] 全部 " + st0.total + " 道选择题已写入页面答案模型" + (st0.unknown ? "（另有 " + st0.unknown + " 题无法定位，未参与校验）" : ""));
           }
         } catch (e) { console.log("[答案模型] 校验异常:", e); }
         if (this.defaultConfig.autoSubmit) {
+          let tempsaved = false;   // 因答案不完整而改为「暂存」：不算失败、不阻止跳章（与关闭自动提交一致）
           // 诊断：哪几题没把答案真正填进页面（填入失败时学习通会弹“您还有未做完的X，确认提交吗？”）
           const unfilled = [];
           for (let i = 0; i < ques.length; i++) "danger" === this.askStore.get(i).status && unfilled.push(i + 1);
           unfilled.length && this.askStore.log("第 " + unfilled.join("、") + " 题未能自动填入答案，提交时可能触发“未做完”确认框", "error");
           if (aiAnswered / ques.length < 0.5 && ques.length > 2) {
-            this.askStore.log("AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，可能API异常，暂存不提交", "error"), this.askStore.submitFailed = true;
-            try {
-              const origAlert0 = iframeWindow.alert;
-              iframeWindow.alert = function(e) { console.log("alert 方法被阻止", e); };
-              iframeWindow.noSubmit();
-              setTimeout(function() { try { iframeWindow.alert = origAlert0; } catch (e) {} }, 5e3);
-            } catch (e) {}
+            // ★ 覆盖率过低（多为 API 异常 / 多数题目没取到答案）→ 不再判「提交失败」，
+            //   改为与「关闭自动提交」完全一致：调页面原生「临时保存」暂存已有答案，
+            //   不算失败、也不阻止跳章（答案已入库不会丢），稍后手动补答并提交即可。
+            const savedLow = await this._tempSaveWork(iframeWindow, ctx);
+            if ("aborted" === savedLow) return void resolve();
+            tempsaved = true;
+            this.askStore.log(savedLow === true
+              ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已调用页面「临时保存」暂存当前答案（请稍后手动补充并提交）"
+              : savedLow === "unknown"
+                ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已请求页面「临时保存」暂存（结果未确认，请稍后核对）"
+                : "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；本页没有暂存入口，答案仅保留在当前页面，请手动提交",
+              "error");
           } else {
             // 把「答案模型状态查询 / 重填」一并交给提交环节：页面刷新会清空答案，提交前必须能自查自补
             const submitted = await this._submitWork(iframeWindow, Object.assign({}, ctx, { choiceState: choiceState, refillChoices: refillChoices }));
             if ("aborted" === submitted) return void resolve();
             if (true === submitted) {
               this.askStore.log("章节测验已完成", "success");
+            } else if ("tempsaved" === submitted) {
+              // ★ 部分题目没拿到答案（AI 返回空 / 未能写入页面）→ 已改为「临时保存」暂存，与「关闭自动提交」一致：
+              //   不算失败、也不阻止跳章（答案已入库不会丢），可稍后手动补答并提交。
+              tempsaved = true;
+              this.askStore.log("本章有题目未取得答案，未提交空白卷；已调用页面「临时保存」暂存当前答案，请稍后手动补充并提交", "error");
             } else if ("unconfirmed" === submitted) {
               this.askStore.submitFailed = true, this.askStore.log("未能确认提交结果，已停止自动跳章，请手动确认本章提交状态", "error");
             } else {
               this.askStore.submitFailed = true, this.askStore.log("章节测验提交失败，已停止自动跳章，请手动检查并提交", "error");
             }
           }
-          this.askStore.task.status = this.askStore.submitFailed ? "提交失败，请手动提交" : "章节测验已完成" + (aiAnswered < ques.length ? ",AI覆盖:" + aiAnswered + "/" + ques.length + " 填入:" + succ : "，全部答出"), resolve();
+          // ⚠️ 必须用大括号：写成 `if (A) S1; else if (B) S2; else S3, resolve();` 时，
+          //   `resolve()` 会跟在最后那个 else 的语句里 → 前两个分支永不 resolve（Promise 永久挂起、轮询死锁），
+          //   这正是历史上踩过的坑（见关闭自动提交分支的同类注释）。
+          if (this.askStore.submitFailed) {
+            this.askStore.task.status = "提交失败，请手动提交";
+          } else if (tempsaved) {
+            this.askStore.task.status = "已暂存(未提交)，AI覆盖:" + aiAnswered + "/" + ques.length + (aiAnswered < ques.length ? " 填入:" + succ : "");
+          } else {
+            this.askStore.task.status = "章节测验已完成" + (aiAnswered < ques.length ? ",AI覆盖:" + aiAnswered + "/" + ques.length + " 填入:" + succ : "，全部答出");
+          }
+          resolve();
         } else {
           // ★ 关闭「自动提交」→ 调页面原生 noSubmit() 做「临时保存(暂存)」：答案入库，之后可手动提交。
           //   （保留 resolve()：原实现此处没有 resolve()，会让 runningTask 永久为真、轮询死锁）
           const saved = await this._tempSaveWork(iframeWindow, ctx);
           if ("aborted" === saved) return void resolve();
           this.askStore.task.status = "已暂存(未提交)，AI覆盖:" + aiAnswered + "/" + ques.length + (aiAnswered < ques.length ? " 填入:" + succ : "");
-          this.askStore.log(saved
+          this.askStore.log(saved === true
             ? "已完成答题；未开启自动提交，已调用页面「临时保存」暂存答案（请稍后手动提交）"
-            : "已完成答题；未开启自动提交，但本页没有暂存入口，答案仅保留在当前页面，请手动提交",
-            saved ? "success" : "error");
+            : saved === "unknown"
+              ? "已完成答题；未开启自动提交，已请求页面「临时保存」暂存（结果未确认，请稍后核对后再手动提交）"
+              : "已完成答题；未开启自动提交，但本页没有暂存入口，答案仅保留在当前页面，请手动提交",
+            saved === false ? "error" : "success");
           resolve();
         }
       });
@@ -2036,9 +2076,14 @@
     // ★ 临时保存(暂存)：把答案存进服务器但不提交，供之后手动提交。
     // 页面原生实现（realwork.html 实测）：noSubmit() → saveWork()
     //   → POST /work/addStudentWorkNew?...&saveStatus=1&tempsave=1 （$("#form1").serialize()）
-    //   → 成功 toast「保存成功！」并 location.reload()（答案已入库，重载后仍在）
+    //   → success(data){ if(data.status){ alert("保存成功！"); setTimeout(reload, 1000) } else alert(data.msg) }
+    //   → complete(){ tempSave=false; $("#tempsave").text("暂时保存") }   ← 这是可靠的「已结束」信号
     //   注意：noSubmit() 内有 `if(tempSave) return;` 防重，且结束后会把 tempSave 复位。
-    // 返回 true=已触发暂存 / false=未找到暂存入口 / "aborted"=期间用户手动切章
+    // ★★ 返回三态（旧实现无条件 return true = 会谎报「已暂存」而答案其实没入库）：
+    //   true       = 已拿到**正向回执**（捕获到「保存成功！」/ #tempsave 文案从「正在暂存...」复位）
+    //   false      = 未找到暂存入口；或拿到**明确失败**文案（failRe 命中 data.msg）
+    //   "unknown"  = 入口已触发，但窗口内没等到任何回执（响应慢/被 reload 打断）→ 不判失败，由调用方按「已暂存(未确认)」处理
+    //   "aborted"  = 期间用户手动切章
     async _tempSaveWork(iframeWindow, ctx) {
       const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
       const w = iframeWindow;
@@ -2046,26 +2091,75 @@
       let fn = null;
       try { fn = w.noSubmit; } catch (e) {}
       let btn = null;                        // 兜底：部分模板把暂存做成真实按钮
-      try { btn = w.document && w.document.querySelector("#tempsave, .btnSave, [onclick*='noSubmit']"); } catch (e) {}
+      // ⚠️ 只认「暂存」语义的入口：#tempsave（真机实测的暂存按钮 id）、onclick 指向 noSubmit 的元素。
+      //   旧实现把 .btnSave 也一并选进来 —— 它在真机页面里是【提交】按钮（btnBlueSubmit 失败提示用它定位），
+      //   一旦 noSubmit 不存在就会把「暂存」误点成「提交」，故移除。
+      try { btn = w.document && w.document.querySelector("#tempsave, [onclick*='noSubmit']"); } catch (e) {}
+      if (!btn) {
+        // ★ 灰度模板（如 mooc1-gray.*）可能换了 id/类名 → 按【精确文案】找暂存入口。
+        //   只认「暂时保存 / 暂存」，绝不认模糊的「保存」二字，避免误点其它控件。
+        try {
+          const cands = w.document.querySelectorAll("a, button, span, div, input[type=button]");
+          for (let i = 0; i < cands.length; i++) {
+            const t = String(cands[i].textContent || cands[i].value || "").replace(/\s+/g, "");
+            if ("暂时保存" === t || "暂存" === t) { btn = cands[i]; break; }
+          }
+        } catch (e) {}
+      }
       const hasFn = "function" === typeof fn;
       if (!hasFn && !btn) { console.log("[暂存] 本页未提供 noSubmit()/暂存按钮，答案仅保留在当前页面"); return false; }
       if (aborted()) return "aborted";
-      // 暂存成功页可能会弹出原生 alert（「保存成功！」）而阻塞脚本 → 临时静音，稍后还原
+
+      // ★ 哨兵：暂存完成的判定信号有三条（任一命中即算成功），都必须排除「调用前就存在的旧状态」
+      //   ① /works 的 success 回调 alert「保存成功！」（用哨兵窗口捕获，避免误读页面上残留/其它 alert）
+      //   ② saveWork() 的 complete() 把 #tempsave 文案复位（"正在暂存..." → "暂时保存"）
+      //   ③ （失败）alert(data.msg) —— 用 failRe 判定
+      const sentinel = "__cxTempSaveSentinel__";
+      const cap = { alerts: [], softFail: "" };
+      w[sentinel] = cap;
+      const readBtnTxt = () => { try { return String((w.document && w.document.querySelector("#tempsave") || {}).textContent || "").replace(/\s+/g, ""); } catch (e) { return ""; } };
+      const txtBefore = readBtnTxt();          // 调用前的文案（正常为「暂时保存」，页面可能还没渲染出来 → 空）
+      const beforeAlerts = cap.alerts.length;
+
+      // 暂存成功/失败页可能弹原生 alert 阻塞脚本 → 临时静音，但**内容要记进哨兵**（这是正向/失败证据）
       const origAlert = w.alert;
-      try { w.alert = function(m) { console.log("[暂存] 页面 alert 已静音:", m); }; } catch (e) {}
+      try { w.alert = function(m) { cap.alerts.push(String(m)); console.log("[暂存] 页面 alert 已静音:", m); }; } catch (e) {}
+
       try {
         if (hasFn) fn.call(w);
         else btn.click();
       } catch (e) {
         console.log("[暂存] 触发异常:", e);
         try { w.alert = origAlert; } catch (_) {}
+        try { delete w[sentinel]; } catch (_) {}
         return false;
       }
-      // saveWork() 是 ajax，页面上「正在暂存...」→ 成功后 1s 才 reload，这里等它走完
-      await sleepMs(1200);
+
+      // ★ 有界等待回执（最多 TEMPSAVE_WAIT_MS）：saveWork() 是 ajax，成功后 1s 才 reload，
+      //   必须在 reload 之前把结论记下来（reload 后 DOM/变量全没了）。
+      const TEMPSAVE_WAIT_MS = 8000, POLL = 250;
+      const okRe = /保存成功|暂存成功/;
+      // 暂存失败文案：沿用 _submitWork 里 failRe 的核心项（此处不能跨作用域复用其局部变量，故局部定义精简版）
+      const saveFailRe = /(提交失败|作业提交失败|保存失败|出错|异常|请重试|未成功|服务器繁忙|系统繁忙|网络异常|操作失败|账号发生异常|请刷新页面后重试|超过教师限制字数|字数未达到|只能录入不能粘贴)/;
+      let ok = false, hardFail = "";
+      for (let waited = 0; waited < TEMPSAVE_WAIT_MS; waited += POLL) {
+        if (aborted()) { try { w.alert = origAlert; } catch (e) {} try { delete w[sentinel]; } catch (_) {} return "aborted"; }
+        // ① 明确失败文案 → 立即判失败（不必等满窗口）
+        const bad = cap.alerts.slice(beforeAlerts).filter(function(m) { return saveFailRe.test(m); })[0];
+        if (bad) { hardFail = bad; break; }
+        // ② 正向：alert 出现「保存成功」/「暂存成功」
+        if (cap.alerts.slice(beforeAlerts).some(function(m) { return okRe.test(m); })) { ok = true; break; }
+        // ③ 正向：按钮文案已从「正在暂存...」复位（complete 回调的副作用）
+        const nowTxt = readBtnTxt();
+        if (nowTxt && "正在暂存" !== nowTxt && (txtBefore ? nowTxt === txtBefore : ("暂时保存" === nowTxt || "暂存" === nowTxt))) { ok = true; break; }
+        await sleepMs(POLL);
+      }
       try { w.alert = origAlert; } catch (e) {}
-      console.log("[暂存] 已请求页面临时保存（noSubmit/saveWork）");
-      return true;
+      try { delete w[sentinel]; } catch (_) {}
+      if (hardFail) { console.log("[暂存] 页面返回失败:", hardFail); return false; }
+      if (ok) { console.log("[暂存] 已确认页面临时保存成功（noSubmit/saveWork，正向回执）"); return true; }
+      console.log("[暂存] 已触发暂存但 " + (TEMPSAVE_WAIT_MS / 1000) + "s 内未确认结果（响应慢或被 reload 打断）→ 按「已暂存(未确认)」处理");
+      return "unknown";
     }
     // 提交章节测验：接管页面弹窗 + 真实点击弹层确认 + 等到提交结果，返回是否提交成功
     async _submitWork(iframeWindow, ctx) {
@@ -2446,12 +2540,37 @@
         return false;
       }
       if (!ok && answersBad) {
-        this.askStore.log("页面上没有可提交的答案（答案没写进页面模型，或被页面刷新/失败重载清空），自动补写未成功，已拒绝提交空白答案并停止自动跳章，请手动检查", "error");
+        // ★★ 本轮修复（核心）★★
+        //   答案不完整（有题目 AI 没给出答案 / 没能写进页面模型）时，**不再直接判「提交失败」**：
+        //   改为调用页面原生的「暂时保存」(noSubmit) 把已有答案存进服务器 —— 与「关闭自动提交」的行为完全一致。
+        //   答案不会丢，稍后手动补答再提交即可；按用户要求，暂存不算失败、也不阻止跳章。
+        const saved = await this._tempSaveWork(iframeWindow, ctx);
+        if ("aborted" === saved) return "aborted";
+        if (false !== saved) {   // true 或 "unknown"（已触发但未确认）都算「已暂存」，不判失败
+          console.log("[提交] 答案不完整（有题未答/未写入页面）→ 已改为调用页面「临时保存」暂存当前答案"
+            + (saved === "unknown" ? "（结果未确认）" : ""));
+          return "tempsaved";
+        }
+        this.askStore.log("页面上没有可提交的答案（答案没写进页面模型，或被页面刷新/失败重载清空），自动补写未成功，本页也没有暂存入口，已停止自动跳章，请手动检查", "error");
         return false;
       }
-      if (!ok && failedAny) {
-        // ★ 明确捕获到页面的失败提示（如 alert“作业提交失败！”）→ 就是失败，不能含糊成 unconfirmed
-        this.askStore.log("章节测验提交失败（页面返回失败提示），已停止自动跳章，请手动检查并提交", "error");
+      if (!ok && (failedAny || unconfirmed)) {
+        // ★ 1.2.8：页面报失败（如 alert「作业提交失败！」）或「未确认结果」时，不再直接判「提交失败」。
+        //   理由：这两条路径下**答案多数已经写进 DOM / 页面模型**，此时调页面原生「临时保存」
+        //   (noSubmit) 仍有意义 —— 答案能入库、不丢，稍后手动补答再提交即可。
+        //   比旧行为（停在页面上什么都不做、还阻止跳章）严格更优。
+        //   ⚠️ 注意顺序：本条必须在 answersBad 之后 —— 答案压根没写进模型时暂存等于存空白卷，无意义。
+        const savedF = await this._tempSaveWork(iframeWindow, ctx);
+        if ("aborted" === savedF) return "aborted";
+        if (false !== savedF) {  // true 或 "unknown" 都算「已暂存」
+          console.log("[提交] 页面返回失败/未确认结果 → 已改为调用页面「临时保存」暂存当前答案"
+            + (savedF === "unknown" ? "（结果未确认）" : ""));
+          this.askStore.log(savedF === "unknown"
+            ? "章节测验未能正常提交；已请求页面「临时保存」暂存答案（结果未确认，请稍后在页面上核对后再手动提交）"
+            : "章节测验未能正常提交（页面返回失败提示或未能确认结果）；已调用页面「临时保存」暂存答案，请稍后手动提交", "error");
+          return "tempsaved";
+        }
+        this.askStore.log("章节测验提交失败（页面返回失败提示或未能确认结果），且本页没有暂存入口，已停止自动跳章，请手动检查并提交", "error");
         return false;
       }
       if (!ok) {
@@ -2535,9 +2654,9 @@
       cxModel.askStore.log("脚本初始化成功！", "success");
       // 构建标识：用于从 F12 控制台直接确认“当前实际运行的到底是哪一版脚本”，
       // 专门解决“本地明明改好了、篡改猴里却还是旧副本”的排查难题
-      const BUILD_TAG = "1.2.5-20261011d";
+      const BUILD_TAG = "1.2.9-20261011h";
       try {
-        console.log("[构建] 学习通AI助手 已加载 | version=1.2.5 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交→调noSubmit暂存答案 / 元数据加@connect*(任意API域名可用)");
+        console.log("[构建] 学习通AI助手 已加载 | version=1.2.9 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / max_tokens=1000 / timeout=45s且超时不重试 / 元数据加@connect*(任意API域名可用)");
       } catch (e) {}
       // ===== 章节任务调度（支持“手动切章抢占”）=====
       // runningTask  是否有章节任务正在执行
