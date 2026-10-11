@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.0.0
+// @version      1.2.5
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -41,6 +41,13 @@
 // @connect      generativelanguage.googleapis.com
 // @connect      localhost
 // @connect      127.0.0.1
+// @connect      *
+//                ↑ 通配：允许调用上面未列出的任意域名（如自建/中转站 API）。
+//                  为什么需要它：@connect 属于「安装期元数据」，脚本在运行时无权修改；
+//                  所以「在配置页填个域名就自动加白名单」在技术上做不到。
+//                  加了 * 之后：配置页「API地址」填任何域名都能用；首次访问新域名时
+//                  篡改猴会弹确认框，点「始终允许所有域」即永久放行（或到 篡改猴→本脚本→
+//                  设置→用户域白名单 手动填 * 或该域名）。
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        GM_getValue
@@ -69,7 +76,7 @@
   const getConfig = () => {
     const config = _GM_getValue("config");
     return config || defaultConfig$1;
-  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", interval: 5, answerInterval: 5, autoExam: true }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
+  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", interval: 5, answerInterval: 5, autoExam: true }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek；支持任意厂商/自建/中转站域名——本脚本已声明 @connect *，首次请求新域名时请在篡改猴弹框点『始终允许所有域』即可永久放行" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
     _GM_setValue("config", forminput);
   } } });
   var export_helper_default = (sfc, props) => {
@@ -213,6 +220,9 @@
             try {
               const j = JSON.parse(res.responseText);
               let ans = (j.choices && j.choices[0].message.content || "").trim();
+              // 去除推理模型（DeepSeek-R1 / 思考模式等）残留的思维链标签及其内容，
+              // 否则思维链里的英文字母(A/B/C/D)会被误当作选项，导致答案错误或为空
+              ans = ans.replace(/[\s\S]*?<\/think>/gi, "").replace(/<\/?(?:think|thinking|reasoning)>/gi, "").trim();
               console.log("[AI答题] 原始返回:", ans);
               // 选择题：字母 → 选项文本映射（matchAnswer 做文本精确匹配）
               if (type === 0) {
@@ -224,11 +234,18 @@
                   ans = options[idx];
                 }
               } else if (type === 1) {
-                ans = (ans.match(/[A-Da-d]+/g) || []).join("").toUpperCase();
-                ans = [...new Set(ans.split(""))].sort().join("");
-                const texts = ans.split("").map(c => { const idx = c.charCodeAt(0) - 65; return (idx >= 0 && idx < options.length) ? options[idx] : c; });
-                console.log("[AI答题] 多选 " + ans + " → 选项文本:", texts.join(", "));
-                ans = texts;
+                const letters = (ans.match(/[A-Da-d]+/g) || []).join("").toUpperCase();
+                const uniq = [...new Set(letters.split(""))].filter(c => c >= "A" && c <= "D").sort().join("");
+                if (uniq) {
+                  const texts = uniq.split("").map(c => { const idx = c.charCodeAt(0) - 65; return (idx >= 0 && idx < options.length) ? options[idx] : c; });
+                  console.log("[AI答题] 多选 " + uniq + " → 选项文本:", texts.join(", "));
+                  ans = texts;
+                } else {
+                  // 兼容部分模型直接返回选项文本的情况：按分隔符切分后交给文本精确匹配
+                  const parts = ans.split(/[，,、;；\n]|\s{2,}/).map(s => s.replace(/^[A-Da-d][\.、\)．]\s*/, "").trim()).filter(Boolean);
+                  console.log("[AI答题] 多选(文本返回) →", parts.join(", "));
+                  ans = parts.length ? parts : [ans];
+                }
               } else if (type === 3) {
                 if (ans.includes("正确")||ans.includes("对")||ans.includes("True")||ans.includes("true")||ans.includes("√")||ans.includes("T")) ans = "正确";
                 else ans = "错误";
@@ -1386,17 +1403,44 @@
     setTimeout(() => {
       resolve();
     }, 1e3 * time);
+  }),
+  // 注意：sleep(t) 的参数单位是「秒」(内部 1e3 * t)。
+  // 提交流程里需要的是毫秒级等待，若误用 sleep(500) 会真的等 500 秒，故单独提供 sleepMs。
+  sleepMs = (ms) => new Promise((resolve) => {
+    setTimeout(resolve, ms);
   }), waitIframeLoaded = (iframe) => new Promise((resolve) => {
+    if (!iframe) return void resolve();
+    let done = false;
+    const finish = () => {
+      if (!done) {
+        done = true, clearInterval(timer), clearTimeout(timeoutId), resolve();
+      }
+    };
     const timer = setInterval(() => {
-      var _a;
-      iframe.contentDocument && "complete" === ((_a = iframe.contentDocument) == null ? void 0 : _a.readyState) ? (clearInterval(timer), resolve()) : iframe.addEventListener("load", () => {
-        clearInterval(timer), resolve();
-      });
+      try {
+        var _a;
+        iframe.contentDocument && "complete" === ((_a = iframe.contentDocument) == null ? void 0 : _a.readyState) ? finish() : iframe.addEventListener("load", finish, { once: true });
+      } catch (e) {
+        finish();
+      }
     }, 100);
+    const timeoutId = setTimeout(finish, 15e3);
   }), waitElementLoaded = (iframeWindow, selector) => new Promise((resolve) => {
+    if (!iframeWindow) return void resolve();
+    let done = false;
+    const finish = () => {
+      if (!done) {
+        done = true, clearInterval(timer), clearTimeout(timeoutId), resolve();
+      }
+    };
     const timer = setInterval(() => {
-      iframeWindow.document.querySelector(selector) && (clearInterval(timer), resolve());
+      try {
+        iframeWindow.document && iframeWindow.document.querySelector(selector) && finish();
+      } catch (e) {
+        finish();
+      }
     }, 100);
+    const timeoutId = setTimeout(finish, 15e3);
   }), removeHtml = (html) => null == html ? "" : html.replace(/<((?!img|sub|sup|br)[^>]+)>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").replace(/<br\s*\/?>/g, "\n").replace(/<img.*?src="(.*?)".*?>/g, '<img src="$1"/>').trim(), cl = (str) => str.replace(/^【.*?】\s*/, "").replace(/\s*（\d+\.\d+分）$/, ""), getQuestion = (type, html) => {
     let questionHtml, questionText, questionTypeId, optionHtml, tokenHtml, workType, optionText, index;
     switch (type) {
@@ -1465,18 +1509,108 @@
   }, setAnswer = (answer, questionData, html, iframeWindow) => {
     switch (questionData.type) {
       case "0":
-      case "1":
+      case "1": {
         const matchArr = matchAnswer(answer, questionData.options);
-        matchArr.length > 0 && clearCurrent(html, iframeWindow);
-        for (var i = 0; i < matchArr.length; i++)
-          console.log($$1(html).find("li").eq(matchArr[i]), matchArr[i]), $$1(html).find("ul:eq(0) li :radio,:checkbox,textarea").eq(matchArr[i]).click(), $$1(html).find(".answerBg").eq(matchArr[i]).click(), $$1(html).find("li").eq(matchArr[i]).click();
-        return matchArr.length > 0 && answer;
-      case "3":
-        return clearCurrent(html, iframeWindow), answer instanceof Array && (answer = answer[0]), $$1(html).find("ul:eq(0) li :radio,:checkbox,textarea").each(function() {
-          "true" == $$1(this).val() ? answer.match(/(^|,)(True|true|正确|是|对|√|T|ri)(,|$)/) && $$1(this).click() : answer.match(/(^|,)(False|false|错误|否|错|×|F|wr)(,|$)/) && $$1(this).click();
-        }), $$1(html).find(".answerBg").each(function() {
-          "true" == $$1(this).find(".num_option").attr("data") ? answer.match(/(^|,)(True|true|正确|是|对|√|T|ri)(,|$)/) && $$1(this).click() : answer.match(/(^|,)(False|false|错误|否|错|×|F|wr)(,|$)/) && $$1(this).click();
-        }), !!($$1(html).find("ul:eq(0) li :radio,:checkbox,textarea").is(":checked") || $$1(html).find(".check_answer").length > 0 || $$1(html).find(".check_answer_dx").length > 0) && answer;
+        if (matchArr.length === 0) return false;
+        clearCurrent(html, iframeWindow);
+        const $root = $$1(html);
+        // 选项 li 只取“像选项”的那些（含 .after / 表单控件 / .answerBg），
+        // 避免题干中无关的 li 混入导致下标错位、点错或漏点选项
+        let $lis = $root.find("ul:eq(0) li").filter(function() {
+          return $$1(this).find(".after, :radio, :checkbox, .answerBg").length > 0;
+        });
+        if ($lis.length === 0) $lis = $root.find("li").filter(function() {
+          return $$1(this).find(".after, :radio, :checkbox, .answerBg").length > 0;
+        });
+        const $answerBg = $root.find(".answerBg");
+        for (let i = 0; i < matchArr.length; i++) {
+          const idx = matchArr[i];
+          let $li = $lis.eq(idx);
+          // 优先按选项文本精确定位（最稳），文本匹配失败时退回下标定位
+          const wantText = removeHtml(questionData.options[idx] || "");
+          if (wantText) {
+            const $byText = $lis.filter(function() {
+              const $a = $$1(this).find(".after");
+              return removeHtml($a.length ? $a.first().html() : this.innerHTML) === wantText;
+            });
+            if ($byText.length) $li = $byText.first();
+          }
+          const $input = $li.find(":radio, :checkbox").first();
+          if ($input.length) {
+            // 已选中的直接跳过：多选题重复点击会反选，反而造成“未做完”
+            if ($input.prop("checked")) continue;
+            const $label = $li.find("label").first();
+            if ($label.length) $label.click();
+            if (!$input.prop("checked") && $li.length) $li.click();
+            // 最后兜底：直接置为选中并触发 change，保证页面“未做完”校验能通过
+            if (!$input.prop("checked")) $input.prop("checked", true).trigger("change");
+          } else if ($answerBg.eq(idx).length) {
+            if ($answerBg.eq(idx).find(".check_answer, .check_answer_dx").length) continue;
+            $answerBg.eq(idx).click();
+          } else if ($li.length) {
+            // ★★ 已选中的不重复点 ★★
+            //   学习通的选项 li 是“点击即切换”（addChoice/addMultipleChoice 里都是 hasClass 判断后 add/remove），
+            //   对同一项点第二次会把答案反选成空 → 隐藏域 #answer<qid> 变空 → 提交时弹“您还有未做完的X，确认提交吗？”。
+            //   fillAnswer 在“第一条 AI 结果返回 false 时会用下一条再试”，很容易触发这次重复点击。
+            if ($li.find(".check_answer, .check_answer_dx").length) continue;
+            $li.click();
+          }
+        }
+        // ★★ 确定性写答案模型（本轮核心）★★
+        //   上面的点击是「尽力而为」：新模板（选项是 <span class="num_option choice<qid>">，没有 radio/.answerBg）
+        //   里它根本不写模型，导致答案落不进 #answer<qid>、提交时被弹「您还有未做完的」。这里直接写死模型。
+        let _wrote = null;
+        try { _wrote = writeChoiceModel(html, matchArr, iframeWindow.document, "1" == questionData.type); } catch (e) { console.log("[答案模型] 直写失败:", e); }
+        if (_wrote) return answer;
+        // ★ 新模板判定：题内含 .choice<qid> 选项 span ⇒ 一定是新模板。
+        //   新模板里页面没有 radio/.answerBg 可点，旧式 (hasInputs ? anyChecked : true) 会因 hasInputs=false 恒返回真，
+        //   把「答案根本没写进模型」谎报成「已填入」→ 上层既看不到失败、也不标红，最后提交时才炸。
+        //   这里必须如实返回 false，交由提交前的 choiceState/refillChoices 兜底补写。
+        let _newTpl = false, _inpNow = null;
+        try {
+          _inpNow = answerInputOf(html, iframeWindow.document);
+          if (_inpNow) _newTpl = !!iframeWindow.document.querySelectorAll(".choice" + String(_inpNow.id).slice(6)).length;
+        } catch (e) {}
+        if (_newTpl) {
+          // 直写失败，但页面自身的点击路径可能已经把答案写进模型 → 以模型实际内容为准，避免误报失败
+          try { if (_inpNow && String(_inpNow.value || "").replace(/\s+/g, "")) return answer; } catch (e) {}
+          console.log("[答案模型] 新模板直写未成功，如实返回 false（等待提交前补写兜底）");
+          return false;
+        }
+        // 兜底（老模板 / 结构异常）：沿用原来的 DOM 判定
+        const hasInputs = $root.find("ul:eq(0) :radio, :checkbox").length > 0;
+        const anyChecked = $root.find("ul:eq(0) :radio, :checkbox").filter(":checked").length > 0
+          || $root.find(".check_answer, .check_answer_dx").length > 0;
+        return (hasInputs ? anyChecked : true) ? answer : false;
+      }
+      case "3": {
+        clearCurrent(html, iframeWindow);
+        const _ans3 = answer instanceof Array ? answer[0] : answer;
+        const _idxs3 = targetIndices("3", _ans3, questionData.options);
+        try {
+          $$1(html).find("ul:eq(0) li :radio,:checkbox,textarea").each(function() {
+            "true" == $$1(this).val() ? _ans3.match(/(^|,)(True|true|正确|是|对|√|T|ri)(,|$)/) && $$1(this).click() : _ans3.match(/(^|,)(False|false|错误|否|错|×|F|wr)(,|$)/) && $$1(this).click();
+          }), $$1(html).find(".answerBg").each(function() {
+            "true" == $$1(this).find(".num_option").attr("data") ? _ans3.match(/(^|,)(True|true|正确|是|对|√|T|ri)(,|$)/) && $$1(this).click() : _ans3.match(/(^|,)(False|false|错误|否|错|×|F|wr)(,|$)/) && $$1(this).click();
+          });
+        } catch (e) {}
+        // ★ 确定性写模型：判断题同样只读 #answer<qid>.value，必须直接写
+        let _wrote3 = null;
+        try { _wrote3 = writeChoiceModel(html, _idxs3, iframeWindow.document, false); } catch (e) { console.log("[答案模型] 判断题直写失败:", e); }
+        if (_wrote3) return _ans3;
+        // 新模板（题内有 .choice<qid>）下直写失败即真失败，绝不能用 hasInputs 兜底谎报成功（同 case 0/1）
+        let _newTpl3 = false, _inpNow3 = null;
+        try {
+          _inpNow3 = answerInputOf(html, iframeWindow.document);
+          if (_inpNow3) _newTpl3 = !!iframeWindow.document.querySelectorAll(".choice" + String(_inpNow3.id).slice(6)).length;
+        } catch (e) {}
+        if (_newTpl3) {
+          try { if (_inpNow3 && String(_inpNow3.value || "").replace(/\s+/g, "")) return _ans3; } catch (e) {}
+          console.log("[答案模型] 判断题新模板直写未成功，如实返回 false");
+          return false;
+        }
+        return !!($$1(html).find("ul:eq(0) li :radio,:checkbox,textarea").is(":checked") || $$1(html).find(".check_answer").length > 0 || $$1(html).find(".check_answer_dx").length > 0) && _ans3;
+      }
       case "2":
       case "9":
       case "4":
@@ -1520,13 +1654,124 @@
       iframeWindow.UE.getEditor($$1(this).attr("name")).ready(function() {
         this.setContent("");
       });
-    }), $$1(item).find(":radio, :checkbox").prop("checked", false), $$1(item).find("textarea").each(function() {
+    }),
+    // ★ 新模板适配 ★ 现在选项是 <span class="num_option choice<qid>" data="A">，外层没有 .answerBg/.textDIV/.eidtDiv，
+    //   上面的选择器一个都命中不到 → clearCurrent 在新模板上等于空操作，残留的旧选中会让「单选互斥 / 未做完」判定出错。
+    //   这里直接摘掉选中类，并把对应的隐藏答案域一并清空，保证每次填充都从干净状态开始。
+    $$1(item).find(".num_option.check_answer, .num_option.check_answer_dx, .num_option_dx.check_answer, .num_option_dx.check_answer_dx").removeClass("check_answer check_answer_dx"),
+    $$1(item).find('input[type="hidden"][id^="answer"]').each(function() {
+      /^answer\d+$/.test(this.id || "") && (this.value = "", this.setAttribute("value", ""));
+    }),
+    $$1(item).find(":radio, :checkbox").prop("checked", false), $$1(item).find("textarea").each(function() {
       iframeWindow.UE.getEditor($$1(this).attr("name")).ready(function() {
         this.setContent("");
       });
     });
-  }, useAskStore = pinia$1.defineStore({ id: "ask", state: () => ({ dialogVisible: true, count: 0, questionList: [], task: { name: "执行任务中", work: { questionList: [], inx: 0 }, video: [], log: [], status: "" } }), actions: { reset() {
-    this.task.name = "执行任务中", this.task.work = { questionList: [], inx: 0 }, this.task.video = [], this.task.status = "", this.count = 0;
+  },
+  // ★★ 定位题目对应的隐藏答案域 input#answer<qid> ★★
+  //   这是页面「提交」与「未做完」校验唯一读的对象（confirmSubmitWork → $("#form1").serialize()；toadd → $("#answer"+id).val()）。
+  //   注意 input[id^="answer"] 会同时命中 answertype<qid>，必须用 /^answer\d+$/ 精确排除。
+  //   真机结构：<div class="singleQuesId" data="qid"><div class="TiMu">…<ul>…</ul><input type="hidden" id="answer<qid>"></div></div>
+  answerInputOf = (timu, doc) => {
+    if (!timu) return null;
+    // 两轮扫描：先严格 /^answer\d+$/（标准形态），再放宽 /^answer\w+$/（兼容个别模板给 #answer 加后缀的变体）。
+    // 两轮都必须排除 answertype<qid>——它的 id 同样以 "answer" 开头，混进来会让写入落到错误的对象上。
+    const scan = (scope) => {
+      let ns = [];
+      try { ns = scope.querySelectorAll('input[id^="answer"]'); } catch (e) { return null; }
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < ns.length; i++) {
+          const id = (ns[i] && ns[i].id) || "";
+          if (/^answertype/i.test(id)) continue;
+          if (pass === 0 ? /^answer\d+$/.test(id) : /^answer\w+$/.test(id)) return ns[i];
+        }
+      }
+      return null;
+    };
+    const direct = scan(timu);
+    if (direct) return direct;
+    try {
+      let n = timu;
+      while (n && n !== doc) {
+        if (n.classList && n.classList.contains("singleQuesId")) return scan(n);
+        n = n.parentElement;
+      }
+    } catch (e) {}
+    return null;
+  },
+  // 由「AI 给出的答案」算出目标选项下标（相对 questionData.options / 选项 DOM 顺序）
+  //   选择类：按选项文本匹配；判断题再补一条「正确/错误」语义兜底（有些模板 data 是 true/false 而非 A/B）
+  targetIndices = (type, answer, options) => {
+    const arr = answer instanceof Array ? answer : [String(answer)];
+    let idxs = [];
+    try { idxs = matchAnswer(arr, options || []); } catch (e) {}
+    if (!idxs.length && "3" === String(type) && (options || []).length === 2) {
+      const isTrue = /(^|,)(True|true|正确|是|对|√|T|ri|A)(,|$)/.test(String(arr[0]));
+      idxs = [isTrue ? 0 : 1];
+    }
+    return idxs;
+  },
+  // ★★★ 确定性写答案模型（本轮核心修复）★★★
+  //   学习通的提交链（serialize）与「未做完」校验（toadd）都只读 #answer<qid>.value；
+  //   而新模板的选项是 <span class="num_option choice<qid>" data="A">，页面上没有 radio / .answerBg，
+  //   旧实现「点 li 让页面自己写模型」在新模板上整条失效（既不写 value，也无从判断）。
+  //   所以这里直接：① 按 DOM 顺序给选项 span 打/清选中类；② 直接写 input.value = 字母串。
+  //   无论模板怎么变、li.click() 有没有生效，模型都一定写进去。
+  //   返回写入的字母串；找不到新模板结构（无 .choice<qid> span）时返回 null —— 此时**绝不触碰** input.value，
+  //   以免把旧模板（yatori/H5）里已经由点击写好、但结构不同的答案抹掉。
+  writeChoiceModel = (timu, indices, doc, multi) => {
+    const d = doc || (timu && timu.ownerDocument);
+    const inp = answerInputOf(timu, d);
+    if (!inp) { console.log("[答案模型] 直写放弃：题内未定位到 #answer<qid>"); return null; }
+    const qid = String(inp.id).slice(6);
+    // 选项 span 逐级兜底定位。页面自身约定是 .choice<qid>（addChoice/addMultipleChoice 正是按它聚合 data 写 #answer），
+    // 但不同模板可能把类挂在 .num_option / .num_option_dx 上，所以一级不行就降级，尽量别放弃。
+    let spans = [];
+    const take = (fn) => { if (spans.length) return; try { const r = fn(); if (r && r.length) spans = r; } catch (e) {} };
+    take(() => d.querySelectorAll(".choice" + qid));
+    take(() => timu.querySelectorAll(".num_option, .num_option_dx"));
+    take(() => timu.querySelectorAll("span[data]"));
+    // 一个都找不到 ⇒ 不是新模板 → 绝不触碰 input.value，交给原来的点击逻辑（保护 yatori/H5 老模板已写好的答案）
+    if (!spans.length) { console.log("[答案模型] 直写放弃：qid=" + qid + " 未找到任何选项元素"); return null; }
+    const want = {};
+    (indices || []).forEach(function (i) { want[i] = true; });
+    const singleCls = "check_answer", multiCls = "check_answer_dx";
+    let value = "";
+    for (let s = 0; s < spans.length; s++) {
+      const sp = spans[s];
+      // 下标只认「题目内选项顺序」：spans 按 DOM 顺序返回，与 questionData.options 一致
+      const on = !!want[s];
+      try {
+        sp.classList.remove(singleCls); sp.classList.remove(multiCls);   // 先清后设：单选必须互斥
+        if (on) sp.classList.add(multi ? multiCls : singleCls);
+        const li = sp.closest ? sp.closest("li") : null;
+        if (li) { li.setAttribute("aria-checked", on ? "true" : "false"); li.setAttribute("aria-pressed", on ? "true" : "false"); }
+      } catch (e) {}
+      if (on) value += (sp.getAttribute("data") || String.fromCharCode(65 + s));
+    }
+    if (!value) { console.log("[答案模型] 直写放弃：qid=" + qid + " 目标下标算不出值（indices=" + JSON.stringify(indices) + " spans=" + spans.length + "）"); return null; }
+    try { inp.value = value; inp.setAttribute("value", value); } catch (e) { return null; }
+    // 回读校验：写入必须真的落到模型上，否则一律视为失败（宁可由上层重试/拒绝，也不谎报「已填入」）
+    if (String(inp.value == null ? "" : inp.value) !== value) { console.log("[答案模型] 直写回读不一致：期望 " + value + " 实得 " + inp.value); return null; }
+    return value;
+  },
+  // ★★ 根因修复的关键一环：把 askStore 里存的「AI 结果对象数组」拍平成纯答案字符串数组 ★★
+  //   askStore 存的是 fillAnswer 的返回值 = [{form, answer:[…], num, usenum, …}]，并不是答案字符串。
+  //   旧 refillChoices 直接把它整包交给 matchAnswer → removeHtml(对象) 得 "[object Object]" → 恒不匹配 → 补写永远失败。
+  //   这里统一归一化：对象取 .answer，数组递归，最终只留非空字符串。
+  flattenAnswers = (raw) => {
+    const out = [];
+    const walk = (v) => {
+      if (v == null) return;
+      if (Array.isArray(v)) { v.forEach(walk); return; }
+      if (typeof v === "object") { if ("answer" in v) walk(v.answer); return; }
+      const s = String(v).trim();
+      if (s) out.push(s);
+    };
+    walk(raw);
+    return out;
+  }, useAskStore = pinia$1.defineStore({ id: "ask", state: () => ({ dialogVisible: true, count: 0, submitFailed: false, questionList: [], task: { name: "执行任务中", work: { questionList: [], inx: 0 }, video: [], log: [], status: "" } }), actions: { reset() {
+    this.task.name = "执行任务中", this.task.work = { questionList: [], inx: 0 }, this.task.video = [], this.task.status = "", this.count = 0, this.submitFailed = false;
   }, select(index) {
     this.task.work.questionList[index].selected = true, this.task.work.inx = index;
     try {
@@ -1542,6 +1787,9 @@
     this.task.work.questionList[index] = question;
   }, log(msg, level = "info") {
     this.task.log.length > 20 && this.task.log.shift(), this.task.log.push({ time: (/* @__PURE__ */ new Date()).toLocaleTimeString(), msg, type: level });
+    // 面板日志以前只进 UI，F12 控制台看不到 → 排查「为什么没提交/为什么判失败」只能靠猜。
+    // 这里同步打一份到控制台，前缀 [日志]，错误级别再加 [错误]。
+    try { console.log("[日志]" + ("error" === level ? "[错误]" : "success" === level ? "[成功]" : "") + " " + msg); } catch (e) {}
   }, msg(msg) {
     this.task.status = msg;
   } } }), _sfc_main = vue.defineComponent({ setup() {
@@ -1575,7 +1823,8 @@
         return div.id = "xxxxzx", td.getElementById(div.id) || td.body.append(div), div;
       })());
     }
-    async audio(iframeWindow) {
+    async audio(iframeWindow, ctx) {
+      const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
       this.askStore.reset(), this.askStore.task.name = "视频音频";
       const audio = iframeWindow.document.getElementById("audio_html5_api");
       return audio.muted = true, audio.autoplay = true, audio.volume = 0, audio.play().then(function() {
@@ -1586,6 +1835,7 @@
         } }) : console.error("视频播放失败，原因：", error);
       }), new Promise((resolve) => {
         const intervalId = setInterval(() => {
+          if (aborted()) return clearInterval(intervalId), console.log("[中断] 音频任务已中止"), resolve();
           audio.ended ? (clearInterval(intervalId), log("监听到音频已完成", "success"), resolve()) : audio.paused && audio.play();
         }, 1e3);
         audio.addEventListener("ended", function() {
@@ -1593,11 +1843,15 @@
         });
       });
     }
-    async video(iframeWindow) {
-      this.askStore.reset(), this.askStore.task.name = "视频", this.askStore.task.video.status = 1, await waitElementLoaded(iframeWindow, "#video_html5_api"), console.log("视频加载完成");
+    async video(iframeWindow, ctx) {
+      const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
+      this.askStore.reset(), this.askStore.task.name = "视频", this.askStore.task.video.status = 1;
+      await waitElementLoaded(iframeWindow, "#video_html5_api"), console.log("视频加载完成");
+      if (aborted()) return void console.log("[中断] 视频任务已中止（章节已切换）");
       const player = iframeWindow.videojs("video_html5_api"), playerButton = iframeWindow.document.querySelector(".vjs-big-play-button");
       player.muted(true), player.playbackRate(16), player.play(), await new Promise((resolve) => {
         const intervalId = setInterval(() => {
+          if (aborted()) { clearInterval(intervalId); try { player.pause(); } catch (e) {} return void console.log("[中断] 视频任务已中止"), resolve(); }
           "isUnFinishJob" in iframeWindow && iframeWindow.isUnFinishJob() ? player.paused() && (playerButton == null ? void 0 : playerButton.click()) : (clearInterval(intervalId), resolve());
         }, 1e3), pauseBase = player.pause;
         player.pause = function() {
@@ -1607,8 +1861,15 @@
         });
       }), console.log("任务点完成");
     }
-    work(iframeWindow) {
+    work(iframeWindow, ctx) {
       return new Promise(async (resolve) => {
+        // ctx.aborted() 为真表示用户已手动切章，本任务必须立刻让出，不能继续往已失效的 DOM 里填答案
+        const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
+        const stopIfAborted = (msg) => {
+          if (!aborted()) return false;
+          this.askStore.log(msg, "info");
+          return true;
+        };
         decode(iframeWindow);
         const Timu = iframeWindow.document.querySelectorAll(".TiMu");
         if (!Timu)
@@ -1620,25 +1881,584 @@
         }
         this.askStore.reset(), this.askStore.count = ques.length, this.askStore.task.name = "章节测验";
         for (let i = 0; i < ques.length; i++) {
+          if (stopIfAborted("检测到已手动切换章节，中止本章答题")) return void resolve();
           await sleep(this.defaultConfig.answerInterval), this.askStore.insert(ques[i]), this.askStore.task.work.inx = i;
+          // 修复：原脚本只读 window._aiQIdx 从不写入，导致每道题的日志都打印「第 1 题」
+          window._aiQIdx = i;
           let data = await getAnswers(ques[i], iframeWindow);
+          if (stopIfAborted("检测到已手动切换章节，中止本章答题")) return void resolve();
           this.askStore.get(i).allAnswer = data;
           let aiHasAnswer = data.some(function(d) { var a = d.answer; return a && (typeof a === "string" ? a.length > 0 : a.length > 0); });
           aiHasAnswer && aiAnswered++;
           let tmp = fillAnswer(data, ques[i], Timu[i], iframeWindow);
           tmp ? (this.askStore.get(i).status = "primary", this.askStore.get(i).answer = tmp, succ++) : (this.askStore.get(i).status = "danger", this.askStore.get(i).answer = "暂无答案"), this.askStore.get(i).dom = Timu[i];
         }
-        if (this.defaultConfig.autoSubmit) {
-          if (aiAnswered / ques.length < 0.5 && ques.length > 2) {
-            this.askStore.log("AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，可能API异常，暂存不提交", "error"), iframeWindow.alert = function(e) { console.log("alert 方法被阻止", e); }, iframeWindow.noSubmit();
-          } else {
-            iframeWindow.btnBlueSubmit(), await sleep(3), iframeWindow.submitCheckTimes(), this.askStore.log("章节测验已完成", "success");
+        if (stopIfAborted("检测到已手动切换章节，跳过提交")) return void resolve();
+        // ★★ 让答案真正写进“页面自己的答案模型”，并在提交前后反复校验 ★★
+        // 学习通的校验/提交读的是隐藏域 #answer<qid>，由选项 li 的 onclick=addChoice/addMultipleChoice 写入。
+        // 页面提交失败时会执行 location.reload()（见 realwork.html 的 confirmSubmitWork），
+        // DOM 勾选与 #answer 隐藏域会被一起清空 → 若不重填就直接再提交，交上去的是**空白卷**。
+        // 所以这里不只在填充后校验一次，而是把「状态查询 / 按存好的答案重填」做成可复用函数，交给提交环节反复调用。
+        const isChoiceType = (t) => { t = String(t); return t === "0" || t === "1" || t === "3"; };   // 单选/多选/判断：#answer 由点选即时写入
+        const qidOfTimu = (timu, doc) => {
+          if (!timu) return null;
+          // ① 最稳：题内容器里的隐藏答案域 input#answer<qid> —— 它才是页面提交/校验真正读的对象，
+          //    用它反推 qid 可以彻底摆脱「判断题 li 上没有 qid / 结构变体」导致的“无法定位”
+          try { const inp = answerInputOf(timu, doc || iframeWindow.document); if (inp) { const q = String(inp.id).slice(6); if (q) return q; } } catch (e) {}
+          // ② 选项 li 上的 qid（li[qid="..." onclick="addChoice(this)"）
+          try { const el = timu.querySelector("[qid]"); if (el) { const q = el.getAttribute("qid"); if (q) return q; } } catch (e) {}
+          // ③ 外层 .singleQuesId 的 data 属性
+          try {
+            let n = timu;
+            while (n && n !== doc) { if (n.classList && n.classList.contains("singleQuesId")) return n.getAttribute("data"); n = n.parentElement; }
+          } catch (e) {}
+          return null;
+        };
+        // 选择题答案模型状态。每次都重新取 DOM —— 页面重载后旧节点会失效，缓存住的 NodeList 会给出错误结论。
+        const choiceState = () => {
+          const doc = iframeWindow.document;
+          let Ti = [];
+          try { Ti = doc.querySelectorAll(".TiMu"); } catch (e) {}
+          const missing = [];
+          let total = 0, unknown = 0;
+          for (let i = 0; i < ques.length; i++) {
+            if (!isChoiceType(ques[i].type)) continue;
+            const qid = qidOfTimu(Ti[i], doc);
+            if (!qid) { unknown++; continue; }                       // 定位不到就当“无法判定”，不误报
+            let inp = null;
+            try { inp = doc.getElementById("answer" + qid); } catch (e) {}
+            if (!inp) { unknown++; continue; }
+            total++;
+            if (!String(inp.value || "").replace(/\s+/g, "")) missing.push(i);
           }
-          this.askStore.task.status = "章节测验已完成" + (aiAnswered < ques.length ? ",AI覆盖:" + aiAnswered + "/" + ques.length + " 填入:" + succ : "，全部答出"), resolve();
+          return { total: total, unknown: unknown, missing: missing };
+        };
+        // 把缺失的选择题按我们已存的答案重新点选回去（已选中的一律跳过，绝不反选）
+        const refillChoices = () => {
+          const doc = iframeWindow.document;
+          let Ti = [];
+          try { Ti = doc.querySelectorAll(".TiMu"); } catch (e) {}
+          const st = choiceState();
+          for (let n = 0; n < st.missing.length; n++) {
+            const idx = st.missing[n], timu = Ti[idx];
+            if (!timu) continue;
+            // ★★ 根因修复（本轮核心，勿再退回）★★
+            //   askStore 里存的是 fillAnswer 的返回值 —— 那是 **AI 结果对象数组** [{form, answer:[…], …}]，
+            //   并不是答案字符串。旧实现把它整包丢给 targetIndices → removeHtml(对象) 得 "[object Object]"
+            //   → matchAnswer 恒空 → idxs 恒空 → continue ⇒ **补写永远不可能成功**。
+            //   于是「只要有一题没写进 #answer<qid>，就必然一路走到『拒绝提交空白答案』」——这就是用户症状的直接根因。
+            //   这里改为：优先取 allAnswer（AI 原始结果，无论 fill 成功与否都存了），并**递归拍平**成纯答案字符串数组。
+            const rec = this.askStore.get(idx) || {};
+            const raw = rec.allAnswer != null ? rec.allAnswer : rec.answer;
+            const arr = flattenAnswers(raw);
+            if (!arr.length) continue;
+            const multi = "1" === String(ques[idx].type);
+            const idxs = targetIndices(ques[idx].type, arr, ques[idx].options || []);
+            if (!idxs.length) continue;
+            // ★ 确定性写模型（本轮核心）：不再依赖 li.click() —— 新模板里它根本不写 #answer<qid>。
+            //   这一步就是「页面刷新清空答案后能不能补回来」的关键。
+            let wrote = null;
+            try { wrote = writeChoiceModel(timu, idxs, doc, multi); } catch (e) { console.log("[答案模型] 重填直写失败:", e); }
+            if (wrote) { console.log("[答案模型] 补写第 " + (idx + 1) + " 题成功 → " + wrote + "（第 " + (n + 1) + " 个缺失）"); continue; }
+            console.log("[答案模型] 补写第 " + (idx + 1) + " 题仍失败（idxs=" + JSON.stringify(idxs) + "），转点击兜底");
+            // 兜底（老模板 / 结构异常）：按选项文本点击
+            const qid = qidOfTimu(timu, doc);
+            if (!qid) continue;
+            let lis = [];
+            try { const ns = doc.querySelectorAll("li[qid='" + qid + "']"); for (let q = 0; q < ns.length; q++) lis.push(ns[q]); } catch (e) {}
+            for (let q = 0; q < lis.length; q++) {
+              const li = lis[q];
+              if (li.querySelector(".check_answer, .check_answer_dx")) continue;   // 已选中的不要点，多选会反选
+              const after = li.querySelector(".after");
+              const liTxt = removeHtml((after ? after.innerHTML : li.innerHTML) || "").trim();
+              let letter = null;
+              try { const sp = li.querySelector(".num_option, .num_option_dx"); letter = sp ? sp.getAttribute("data") : null; } catch (e) {}
+              const want = arr.some(function(a) {
+                const s = removeHtml(String(a)).trim();
+                return s && (s === liTxt || (letter && s === letter));
+              });
+              if (want) { try { li.click(); } catch (e) {} }
+            }
+          }
+        };
+        try {
+          const st0 = choiceState();
+          if (st0.missing.length) {
+            this.askStore.log("页面答案模型校验：有 " + st0.missing.length + " 题未写入页面（第 " + st0.missing.map(function(o) { return o + 1; }).join("、") + " 题），正在补写…", "info");
+            refillChoices();
+            const st1 = choiceState();
+            if (st1.missing.length) this.askStore.log("补写后仍有 " + st1.missing.length + " 题为空（第 " + st1.missing.map(function(o) { return o + 1; }).join("、") + " 题），提交环节会再次补写；仍补不上则拒绝提交空白答案", "error");
+            else this.askStore.log("页面答案模型已全部写入，提交不会触发“未做完”", "success");
+          } else if (st0.total) {
+            console.log("[答案模型] 全部 " + st0.total + " 道选择题已写入页面答案模型" + (st0.unknown ? "（另有 " + st0.unknown + " 题无法定位，未参与校验）" : ""));
+          }
+        } catch (e) { console.log("[答案模型] 校验异常:", e); }
+        if (this.defaultConfig.autoSubmit) {
+          // 诊断：哪几题没把答案真正填进页面（填入失败时学习通会弹“您还有未做完的X，确认提交吗？”）
+          const unfilled = [];
+          for (let i = 0; i < ques.length; i++) "danger" === this.askStore.get(i).status && unfilled.push(i + 1);
+          unfilled.length && this.askStore.log("第 " + unfilled.join("、") + " 题未能自动填入答案，提交时可能触发“未做完”确认框", "error");
+          if (aiAnswered / ques.length < 0.5 && ques.length > 2) {
+            this.askStore.log("AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，可能API异常，暂存不提交", "error"), this.askStore.submitFailed = true;
+            try {
+              const origAlert0 = iframeWindow.alert;
+              iframeWindow.alert = function(e) { console.log("alert 方法被阻止", e); };
+              iframeWindow.noSubmit();
+              setTimeout(function() { try { iframeWindow.alert = origAlert0; } catch (e) {} }, 5e3);
+            } catch (e) {}
+          } else {
+            // 把「答案模型状态查询 / 重填」一并交给提交环节：页面刷新会清空答案，提交前必须能自查自补
+            const submitted = await this._submitWork(iframeWindow, Object.assign({}, ctx, { choiceState: choiceState, refillChoices: refillChoices }));
+            if ("aborted" === submitted) return void resolve();
+            if (true === submitted) {
+              this.askStore.log("章节测验已完成", "success");
+            } else if ("unconfirmed" === submitted) {
+              this.askStore.submitFailed = true, this.askStore.log("未能确认提交结果，已停止自动跳章，请手动确认本章提交状态", "error");
+            } else {
+              this.askStore.submitFailed = true, this.askStore.log("章节测验提交失败，已停止自动跳章，请手动检查并提交", "error");
+            }
+          }
+          this.askStore.task.status = this.askStore.submitFailed ? "提交失败，请手动提交" : "章节测验已完成" + (aiAnswered < ques.length ? ",AI覆盖:" + aiAnswered + "/" + ques.length + " 填入:" + succ : "，全部答出"), resolve();
         } else {
-          this.askStore.log("已完成答题，未开启自动提交，等待手动提交中", "success"), this.askStore.task.status = "正在等待手动提交,AI覆盖:" + aiAnswered + "/" + ques.length;
+          // ★ 关闭「自动提交」→ 调页面原生 noSubmit() 做「临时保存(暂存)」：答案入库，之后可手动提交。
+          //   （保留 resolve()：原实现此处没有 resolve()，会让 runningTask 永久为真、轮询死锁）
+          const saved = await this._tempSaveWork(iframeWindow, ctx);
+          if ("aborted" === saved) return void resolve();
+          this.askStore.task.status = "已暂存(未提交)，AI覆盖:" + aiAnswered + "/" + ques.length + (aiAnswered < ques.length ? " 填入:" + succ : "");
+          this.askStore.log(saved
+            ? "已完成答题；未开启自动提交，已调用页面「临时保存」暂存答案（请稍后手动提交）"
+            : "已完成答题；未开启自动提交，但本页没有暂存入口，答案仅保留在当前页面，请手动提交",
+            saved ? "success" : "error");
+          resolve();
         }
       });
+    }
+    // ★ 临时保存(暂存)：把答案存进服务器但不提交，供之后手动提交。
+    // 页面原生实现（realwork.html 实测）：noSubmit() → saveWork()
+    //   → POST /work/addStudentWorkNew?...&saveStatus=1&tempsave=1 （$("#form1").serialize()）
+    //   → 成功 toast「保存成功！」并 location.reload()（答案已入库，重载后仍在）
+    //   注意：noSubmit() 内有 `if(tempSave) return;` 防重，且结束后会把 tempSave 复位。
+    // 返回 true=已触发暂存 / false=未找到暂存入口 / "aborted"=期间用户手动切章
+    async _tempSaveWork(iframeWindow, ctx) {
+      const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
+      const w = iframeWindow;
+      if (!w) return false;
+      let fn = null;
+      try { fn = w.noSubmit; } catch (e) {}
+      let btn = null;                        // 兜底：部分模板把暂存做成真实按钮
+      try { btn = w.document && w.document.querySelector("#tempsave, .btnSave, [onclick*='noSubmit']"); } catch (e) {}
+      const hasFn = "function" === typeof fn;
+      if (!hasFn && !btn) { console.log("[暂存] 本页未提供 noSubmit()/暂存按钮，答案仅保留在当前页面"); return false; }
+      if (aborted()) return "aborted";
+      // 暂存成功页可能会弹出原生 alert（「保存成功！」）而阻塞脚本 → 临时静音，稍后还原
+      const origAlert = w.alert;
+      try { w.alert = function(m) { console.log("[暂存] 页面 alert 已静音:", m); }; } catch (e) {}
+      try {
+        if (hasFn) fn.call(w);
+        else btn.click();
+      } catch (e) {
+        console.log("[暂存] 触发异常:", e);
+        try { w.alert = origAlert; } catch (_) {}
+        return false;
+      }
+      // saveWork() 是 ajax，页面上「正在暂存...」→ 成功后 1s 才 reload，这里等它走完
+      await sleepMs(1200);
+      try { w.alert = origAlert; } catch (e) {}
+      console.log("[暂存] 已请求页面临时保存（noSubmit/saveWork）");
+      return true;
+    }
+    // 提交章节测验：接管页面弹窗 + 真实点击弹层确认 + 等到提交结果，返回是否提交成功
+    async _submitWork(iframeWindow, ctx) {
+      // 返回 true=提交成功 / false=提交失败或需人工 / "aborted"=提交过程中用户手动切章
+      const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
+      const captured = [];
+      // ★★ 根因修复（核心）★★
+      // 学习通这道「确认提交 / 您还有未做完的X，确认提交吗？」的弹层，是题目页调用 **top.workPop(...)**
+      // 弹出的（realwork.html 里 toadd() 结尾就是 `if (top && top.workPop) top.workPop(showTips,...)`），
+      // 也就是说 #workpop 这个 DOM 挂在【最顶层窗口】上，而不是题目页里。
+      // 而题目页的嵌套往往有 4 层以上：
+      //   studentstudy(top) → #iframe(knowledge/cards) → ananas/modules/work/index.html → api/work → 题目页
+      // 旧实现只从题目页往上数 3 层，正好**差一层够不到顶层** → 弹层永远找不到 → 没人点「提交」
+      // → 提交链停死（页面的 performSubmit 压根没被调用），而脚本还因为读不到失败/成功字样谎报“已提交”。
+      // 这里改成：先上溯到最顶层，再自上而下把该顶层下所有同源 iframe 全部收进来。
+      const getTopWin = () => {
+        let w = iframeWindow;
+        try { for (let i = 0; i < 12 && w && w.parent && w.parent !== w; i++) w = w.parent; } catch (e) {}
+        return w || iframeWindow;
+      };
+      const collectWins = () => {
+        const wins = [], seen = [];
+        const walk = (w, depth) => {
+          if (!w || depth > 6 || wins.length > 80 || seen.indexOf(w) >= 0) return;
+          seen.push(w); wins.push(w);
+          let d = null;
+          try { d = w.document; } catch (e) { return; }
+          if (!d) return;
+          let frames = [];
+          try { frames = d.querySelectorAll("iframe, frame"); } catch (e) {}
+          for (let i = 0; i < frames.length; i++) {
+            let cw = null;
+            try { cw = frames[i].contentWindow; } catch (e) {}
+            if (cw && cw !== w) walk(cw, depth + 1);
+          }
+        };
+        walk(getTopWin(), 0);
+        return wins;
+      };
+      const getWins = collectWins;
+      // 弹层可能落在任意一层（顶层 / 作业模块页 / 题目页），统一收集后逐个查找
+      const getDocs = () => {
+        const out = [];
+        collectWins().forEach(function(w) { try { if (w.document) out.push(w.document); } catch (e) {} });
+        return out;
+      };
+      const readFrameHref = () => { try { return iframeWindow.location.href; } catch (e) { return ""; } };
+      const textOf = (el) => {
+        if (!el) return "";
+        try {
+          let t = el.innerText || el.textContent || "";
+          if (el.getAttribute) t += " " + (el.getAttribute("aria-label") || "");
+          return String(t).replace(/\s+/g, " ").trim();
+        } catch (e) { return ""; }
+      };
+      // 提交期间接管**所有可达窗口**的原生弹窗：
+      //  - confirm 一律返回 true（=“确定”）。H5 模板的“您还有未做完的X，确认提交吗？”走的就是它，
+      //    绝不能被当成“取消”，否则等于用户手动点了取消、提交被放弃
+      //  - alert 只记录文本（如“作业提交失败”），既不阻塞脚本，也便于判定提交结果
+      const origPopups = [];
+      getWins().forEach(function(w) {
+        try {
+          const oc = w.confirm, oa = w.alert;
+          origPopups.push({ w: w, confirm: oc, alert: oa });
+          w.confirm = function(m) { captured.push(String(m == null ? "" : m)); console.log("[提交] confirm:", m, "→ 自动确定"); return true; };
+          w.alert = function(m) { captured.push(String(m == null ? "" : m)); console.log("[提交] alert:", m); };
+        } catch (e) { console.log("[提交] 接管弹窗失败:", e); }
+      });
+      const restorePopups = () => {
+        origPopups.forEach(function(o) {
+          try { if ("function" === typeof o.confirm) o.w.confirm = o.confirm; } catch (e) {}
+          try { if ("function" === typeof o.alert) o.w.alert = o.alert; } catch (e) {}
+        });
+      };
+
+      // ⚠ 页面里有一批「toadd() 校验失败 → alert/toast 后直接 return」的静默断链文案：
+      //   它们不会走提交、也不会留弹层，脚本等满 20s 只能落到 unconfirmed。把文案点名才能在日志里说清原因。
+      //   注意用长句（避免与页面静态说明文字误撞，例如「最多选2项」这类提示就不加进来）。
+      const failRe = /(提交失败|作业提交失败|提交出错|提交异常|请重试|未成功|服务器繁忙|系统繁忙|网络异常|操作失败|保存失败|账号发生异常|请刷新页面后重试|答案超过教师限制字数|答案字数未达到教师设置的最少字数要求|只能录入不能粘贴)/;
+      const okRe = /(提交成功|已提交|提交完成|作答已提交|保存成功|重新作答|查看答案)/;              // 用于原生弹窗文本
+      const okPageRe = /(提交成功|答案已保存|已提交成功|提交完成)/;                                   // 用于页面文本（必须收紧：页面里到处是“已完成”“重新作答”等静态文案）
+      const unfinishedRe = /(未做完|未完成|还有\s*\d*\s*题)/;                                        // “还有未做完的题”类确认框
+      const confirmRe = /(确认提交|未做完|提交吗|是否提交|确定提交)/;                                 // 任意模板的“确认层”文案特征
+      const okBtnRe = /^(提交|确定|确认|是|继续|好的|好|OK|Ok|ok|立即提交)$/;                          // 确认按钮文案
+      const cancelRe = /(取消|关闭|返回|暂不|放弃|重做)/;                                            // 绝不点这些
+      // 页面文本扫描只覆盖题目页、且 600ms 缓存一次（旧实现每 200ms 拼接所有帧的 innerText，
+      // 会把整个课程树都算一遍，把检查循环拖到几乎不转）
+      let _lastTextScan = 0, _lastText = "";
+      const readText = () => {
+        const now = Date.now();
+        if (now - _lastTextScan < 600) return _lastText;
+        _lastTextScan = now;
+        let s = "";
+        try { s = (iframeWindow.document.body && iframeWindow.document.body.innerText) || ""; } catch (e) {}
+        _lastText = s;
+        return s;
+      };
+      const isVisible = (el) => {
+        try {
+          if (!el) return false;
+          const st = el.style || {};
+          if ("none" === st.display || "hidden" === st.visibility) return false;
+          const win = (el.ownerDocument && el.ownerDocument.defaultView) || iframeWindow;
+          const cs = win.getComputedStyle ? win.getComputedStyle(el) : null;
+          if (cs && ("none" === cs.display || "hidden" === cs.visibility || "0" === cs.opacity)) return false;
+          return !!(el.offsetWidth || el.offsetHeight || (el.getClientRects && el.getClientRects().length));
+        } catch (e) { return false; }
+      };
+      // 页面自定义弹层（都是 DOM，不是 window.confirm，必须真实点击确认按钮才会继续）
+      //   PC 章节测验/作业（当前模板）：#workpop + #popok —— “您还有未做完的多选题，确认提交吗？”正是这一层，
+      //     由题目页调用 top.workPop() 弹出，DOM 在顶层窗口；#popok 的文案是「提交」（ok.html(okTent)）
+      //   同一模板的另一套确认框：#confirmSubWin（.AlertCon02）里的 a.bluebtn，文案「确认提交？」，onclick=submitCheckTimes()
+      //   H5 模板：#cxAlertBox1 + #okBtn；轻提示：#worktoast + #toastok、#hintPop + #hintOk
+      const POPUPS = [
+        { box: "#workpop", ok: "#popok", label: "workpop" },
+        { box: "#confirmSubWin", ok: ".bluebtn", label: "confirmSubWin" },
+        { box: "#worktoast", ok: "#toastok", label: "worktoast" },
+        { box: "#hintPop", ok: "#hintOk", label: "hintPop" },
+        { box: "#cxAlertBox1", ok: "#okBtn", label: "cxAlertBox" },
+        { box: ".cx_alert-box", ok: ".cx_alert-blue", label: "cx_alert-box" }
+      ];
+      // 需要人工介入、脚本无法自动完成的弹层（如提交次数过多触发的验证码）
+      const MANUAL = [{ box: ".verify-box", label: "提交验证码" }, { box: "#verifyCodeWin", label: "提交验证码" }];
+      // 未知弹层兜底：扫描一切“长得像弹窗”的可见容器，只要文案像“确认提交/未做完”就点它的确定按钮
+      const POP_SEL = ".maskDiv, .AlertCon02, [id*=pop], [class*=pop], [id*=Pop], [class*=Pop], [id*=alert], [class*=alert], [id*=Alert], [class*=Alert], [id*=dialog], [class*=dialog], [class*=Dialog], [role=dialog], [role=alertdialog]";
+      // 在一个弹层内部挑「确定」按钮：只看文案，绝不点 取消/关闭
+      const pickOkBtn = (box) => {
+        const list = [];
+        try {
+          const ns = box.querySelectorAll("a, button, input[type=button], input[type=submit], .bluebtn, .jb_btn, [onclick]");
+          for (let i = 0; i < ns.length && i < 60; i++) list.push(ns[i]);
+        } catch (e) {}
+        for (let i = 0; i < list.length; i++) {
+          const t = textOf(list[i]);
+          if (!t || cancelRe.test(t)) continue;
+          if (okBtnRe.test(t) && isVisible(list[i])) return list[i];
+        }
+        return null;
+      };
+      // 同一弹层文案每轮最多点 2 次（首次 + 一次重试），避免弹层卡死时反复触发提交
+      // 在弹层内部挑「取消/关闭」按钮（专供「未达到及格线，请重做」——
+      //   那个框的【确定】=重做、【取消】=正常继续，点错就把页面打回重做循环）
+      const pickCancelBtn = (box) => {
+        try { const p = box.querySelector("#popno"); if (p && isVisible(p)) return p; } catch (e) {}
+        const list = [];
+        try { const ns = box.querySelectorAll("a, button, input[type=button], [onclick]"); for (let i = 0; i < ns.length && i < 60; i++) list.push(ns[i]); } catch (e) {}
+        for (let i = 0; i < list.length; i++) { const t = textOf(list[i]); if (t && /^(取消|关闭|暂不|返回)$/.test(t) && isVisible(list[i])) return list[i]; }
+        return null;
+      };
+      const GANLINE = /(未达到及格线|不及格|低于及格)/;
+      let clickCounts = {}, popupHits = 0;
+      const firePopup = (label, txt, btn, btnName) => {
+        btnName = btnName || "确定";
+        const sig = label + "|" + txt;
+        const cnt = clickCounts[sig] || 0;
+        const shouldClick = cnt < 2;
+        if (shouldClick) { clickCounts[sig] = cnt + 1; popupHits++; }
+        if (shouldClick) {
+          console.log("[提交] 检测到页面弹层(" + label + "):", txt || "(无文案)",
+            unfinishedRe.test(txt) ? "【未做完确认框】" : "", btn ? "→ 已自动点击“" + btnName + "”" : "(未找到" + btnName + "按钮)");
+        }
+        if (shouldClick && btn) { try { btn.click(); } catch (e) { console.log("[提交] 点击" + btnName + "失败:", e); } return { manual: false, label, text: txt, clicked: true, btnName: btnName }; }
+        return { manual: false, label, text: txt, clicked: false, btnName: btnName };
+      };
+      // 兜底诊断：把各帧可见的“像弹窗”的元素列出来（只在彻底找不到弹层时打印一次，便于下次取证）
+      const dumpCandidates = () => {
+        const out = [];
+        const docs = getDocs();
+        for (let i = 0; i < docs.length && out.length < 8; i++) {
+          let ns = [];
+          try { ns = docs[i].querySelectorAll(POP_SEL); } catch (e) { continue; }
+          for (let q = 0; q < ns.length && out.length < 8; q++) {
+            if (!isVisible(ns[q])) continue;
+            const t = textOf(ns[q]).slice(0, 60);
+            out.push("#" + i + " <" + (ns[q].tagName || "?").toLowerCase() + " id=" + (ns[q].id || "-") + " class=" + String(ns[q].className || "-").slice(0, 40) + "> " + t);
+          }
+        }
+        return out.length ? out.join(" || ") : "(各帧均无可见弹层候选)";
+      };
+      // 返回 null（无弹层）或 { manual, label, text, clicked }
+      let _popScanTick = 0;
+      const popupCheck = () => {
+        _popScanTick++;
+        const doGeneric = 0 === _popScanTick % 3;   // 通用兜底每 ~600ms 才做一次全帧扫描
+        const docs = getDocs();
+        for (let i = 0; i < docs.length; i++) {
+          const d = docs[i];
+          // ① 需要人工的层（验证码）
+          for (let k = 0; k < MANUAL.length; k++) {
+            let box = null;
+            try { box = d.querySelector(MANUAL[k].box); } catch (e) {}
+            if (isVisible(box)) return { manual: true, label: MANUAL[k].label, text: "", clicked: false };
+          }
+          // ①.5 「未达到及格线，请重做」专用分支：确定=重做、取消=正常继续 →
+          //     必须点【取消】。若交给下面的 POPUPS（#workpop→#popok）会被点成「确定」=重做，
+          //     表现为「反复提交、反复失败」。另外这条其实意味着**提交已经成功**，只是分数不及格。
+          {
+            let box = null;
+            try { box = d.querySelector("#workpop, .maskDiv, .AlertCon02"); } catch (e) {}
+            if (isVisible(box) && GANLINE.test(textOf(box))) {
+              const r = firePopup("及格线", textOf(box).slice(0, 120), pickCancelBtn(box), "取消");
+              r.lowScore = true;
+              return r;
+            }
+          }
+          // ② 已知弹层 ID：按钮优先在弹层内部找（旧实现先在整篇文档里查 cfg.ok，
+          //    像 .bluebtn 这种页面上有 7 个的元素会取错对象）
+          for (let k = 0; k < POPUPS.length; k++) {
+            const cfg = POPUPS[k];
+            let box = null;
+            try { box = d.querySelector(cfg.box); } catch (e) { continue; }
+            if (!isVisible(box)) continue;
+            let btn = null;
+            try { btn = box.querySelector(cfg.ok); } catch (e) {}
+            if (!isVisible(btn)) btn = pickOkBtn(box);
+            if (!isVisible(btn)) { try { btn = d.querySelector(cfg.ok); } catch (e) {} }   // 最后兜底：整篇文档里找
+            return firePopup(cfg.label, textOf(box).slice(0, 120), btn);
+          }
+          // ③ 通用兜底：任何可见的、文案像“确认提交/未做完”的弹层
+          if (doGeneric) {
+            let cands = [];
+            try { const ns = d.querySelectorAll(POP_SEL); for (let q = 0; q < ns.length && q < 200; q++) cands.push(ns[q]); } catch (e) {}
+            for (let q = 0; q < cands.length; q++) {
+              const el = cands[q];
+              if (!isVisible(el)) continue;
+              const txt = textOf(el);
+              if (txt.length > 300 || !confirmRe.test(txt)) continue;
+              return firePopup("通用弹层", txt.slice(0, 120), pickOkBtn(el));
+            }
+          }
+        }
+        return null;
+      };
+
+      // ★★ 提交前的“答案还在不在”闸门 ★★
+      //   页面提交失败会执行 location.reload()，把 DOM 勾选与 #answer 隐藏域一起清空；
+      //   此时若继续点“提交”，交上去的是**空白卷**，而页面照样会跳转 → 会被误判成“提交成功”。
+      //   所以每轮巡检弹层之前都先确认答案还在：不在就按已存答案重填；8 秒仍补不上就拒绝提交，
+      //   宁可停下来让用户手动确认，也绝不交白卷。
+      const hasChoiceCheck = ctx && "function" === typeof ctx.choiceState;
+      let refillDeadline = 0;
+      let refillTries = 0;
+      // 页面是否还在加载/重载：加载中的 DOM 里答案本来就「还没回来」，
+      // 此刻既不该触发提交（可能是白卷），也不该判定缺失——先等它稳定。
+      const pageBusy = () => {
+        try { const d = iframeWindow.document; return !!(d && "loading" === d.readyState); } catch (e) { return true; }
+      };
+      // 返回语义：true = 答案都在、可以提交；"wait" = 还缺答案，本轮先别提交、下一轮继续补；false = 补不上了，拒绝提交
+      //   旧实现最后一行「有缺就 return false」= **第一次补写失败就直接判死**，20s 期限完全没用上；
+      //   配合补写本身的 bug，等于「一题没写上 → 立刻拒绝提交」。现在改成「先给窗口、超时/无进展才判死」。
+      const ensureAnswers = () => {
+        if (!hasChoiceCheck) return true;
+        let st = null;
+        try { st = ctx.choiceState(); } catch (e) { return true; }
+        if (!st || !st.total || !st.missing.length) { refillDeadline = 0; refillTries = 0; return true; }
+        if (!refillDeadline) {
+          refillDeadline = Date.now() + 15000;   // 补写窗口 15s（短于外层 20s，保证真补不上时能走到 reject 分支）
+          refillTries = 0;
+          console.log("[提交] 答案模型缺失 " + st.missing.map(function(i) { return i + 1; }).join("、") + " 题，尝试补写…");
+        }
+        try { ctx.refillChoices && ctx.refillChoices(); } catch (e) {}
+        try { st = ctx.choiceState(); } catch (e) { return true; }
+        if (!st || !st.total || !st.missing.length) {
+          refillDeadline = 0; refillTries = 0;
+          console.log("[提交] 补写成功，答案已回到页面模型");
+          return true;
+        }
+        refillTries++;
+        // 连续 6 次补写「毫无进展」⇒ 结构性失败（不是页面还在重载），立刻失败，不空等
+        if (refillTries >= 6) {
+          console.log("[提交] 连续 6 次补写无进展，仍有 " + st.missing.length + " 题为空 → 拒绝提交空白答案");
+          return false;
+        }
+        if (Date.now() > refillDeadline) {
+          console.log("[提交] 补写超时(15s)，仍有 " + st.missing.length + " 题为空 → 拒绝提交空白答案");
+          return false;
+        }
+        return "wait";
+      };
+
+      let ok = false, needManual = "", wasAborted = false, lastPopupText = "", unconfirmed = false, failedAny = false, answersBad = false;
+      try {
+        for (let attempt = 1; attempt <= 2 && !ok && !needManual && !wasAborted; attempt++) {
+          if (aborted()) { wasAborted = true; break; }
+          captured.length = 0; clickCounts = {}; popupHits = 0; lastPopupText = ""; refillDeadline = 0;
+          const startHref = readFrameHref();
+          const t0 = Date.now(), deadline = t0 + 20e3;
+          let triggered = false;                                  // 是否已成功调用过页面提交入口
+          let clickedConfirm = 0;                                 // 本轮真正点到“确定/提交”的次数（正向证据）
+          let popupClearedAt = 0;                                 // 确认层被点掉、从界面上消失的时刻
+          let sawFail = false;                                    // 本轮是否已捕获到明确的失败提示
+          while (Date.now() < deadline) {
+            if (aborted()) { wasAborted = true; break; }
+            const el = Date.now() - t0;
+            // ★★ 触发提交之前，先确认答案还在页面上 ★★
+            //   页面提交失败会 location.reload() 清空答案；若此时不重填就直接触发，页面会拿着空模型走完提交链，
+            //   交上去就是一张空白卷（页面照样跳转，于是被误判成“提交成功”）。先补写，补不上就拒绝提交。
+            if (pageBusy()) { await sleepMs(300); continue; }   // 页面正在重载 → 等它稳，绝不在这时候触发提交
+            const _ea = ensureAnswers();
+            if (_ea === false) { answersBad = true; break; }
+            if (_ea === "wait") { await sleepMs(300); continue; }   // 还有题没写进模型 → 本轮不触发提交，下一轮继续补
+            // ★ 触发器分三级兜底：函数入口 → submitCheckTimes → 页面上真实的提交按钮
+            //   （旧实现只在“全程无任何反应”时才调 submitCheckTimes，且**调用后不再巡检弹层**，
+            //     于是 submitCheckTimes 弹出的“未做完/确认提交”框永远没人点 → 提交链卡死，
+            //     而脚本还会因为读不到“失败/成功”字样误判为提交成功并跳章）
+            if (!triggered) {
+              try { if (iframeWindow.btnBlueSubmit) { iframeWindow.btnBlueSubmit(); triggered = true; console.log("[提交] 已调用 btnBlueSubmit()"); } } catch (e) { console.log("[提交] btnBlueSubmit 异常:", e); }
+            }
+            if (!triggered && el > 1200) {
+              try { if (iframeWindow.submitCheckTimes) { iframeWindow.submitCheckTimes(); triggered = true; console.log("[提交] 已调用 submitCheckTimes()"); } } catch (e) { console.log("[提交] submitCheckTimes 异常:", e); }
+            }
+            if (!triggered && el > 3000) {
+              let domBtn = null;
+              const docs = getDocs(), sels = [".btnSubmit", ".btnBlueSubmit", "#btnBlueSubmit", "#submitBtn", ".subBtn", "#submit"];
+              for (let di = 0; di < docs.length && !domBtn; di++) {
+                for (let si = 0; si < sels.length && !domBtn; si++) {
+                  let b = null;
+                  try { b = docs[di].querySelector(sels[si]); } catch (e) {}
+                  if (isVisible(b)) domBtn = b;
+                }
+              }
+              if (domBtn) { try { domBtn.click(); triggered = true; console.log("[提交] 已点击页面提交按钮:", sels.join("/")); } catch (e) {} }
+            }
+            // ★ 弹层巡检：每轮都查、都点。“您还有未做完的多选题，确认提交吗？”与普通“确认提交？”都必须点掉，
+            //   这里永远点确定/提交，绝不当成“取消”（这两个框的确定按钮正是页面发起真正提交的入口）
+            const hit = popupCheck();
+            if (hit && hit.manual) { needManual = hit.label; break; }
+            if (hit) {
+              if (hit.text) lastPopupText = hit.text;
+              if (hit.clicked) clickedConfirm++;
+              if (hit.lowScore) console.log("[提交] 本章提交成功、但未达到及格线（已点“取消”继续，未触发重做）");
+              popupClearedAt = 0;
+            } else if (clickedConfirm > 0 && !popupClearedAt) popupClearedAt = Date.now();
+            // ★ 结果判定
+            const failMsg = captured.filter(function(m) { return failRe.test(m); })[0];
+            const txt = readText();
+            if (failMsg || failRe.test(txt)) { sawFail = true; failedAny = true; console.log("[提交] 捕获失败提示:", failMsg || txt.slice(0, 120)); break; }
+            if (captured.some(function(m) { return okRe.test(m); }) || okPageRe.test(txt)) { console.log("[提交] 检测到提交成功提示"); ok = true; break; }
+            // 正向证据①：确认层被我们点掉、且之后 2.5 秒内没再冒弹层、也没有失败提示 → 提交确实发出去了
+            if (clickedConfirm > 0 && popupClearedAt && Date.now() - popupClearedAt > 2500 && !popupCheck()) {
+              console.log("[提交] 确认弹层已点掉且无失败提示，判定提交成功（最后弹层:", lastPopupText || "(无)", "）"); ok = true; break;
+            }
+            // 正向证据②：提交后页面自己跳走了（confirmSubmitWork 成功时会 location.href = data.url）
+            if (clickedConfirm > 0 && readFrameHref() !== startHref) { console.log("[提交] 提交后页面已跳转，判定提交成功"); ok = true; break; }
+            await sleepMs(200);
+          }
+          if (needManual || wasAborted || ok || answersBad) break;
+          // 等待窗口结束，先看还有什么没走完（★ 失败分支跳出时绝不能在这里被判成成功）
+          const stuck = popupCheck();
+          if (stuck && stuck.manual) { needManual = stuck.label; break; }
+          if (sawFail) {
+            console.log("[提交] 第 " + attempt + " 次提交失败" + (attempt < 2 ? "，准备重试…" : ""));
+            await sleepMs(1200);
+          } else if (stuck) {
+            console.log("[提交] 第 " + attempt + " 次结束仍有弹层未被点掉:", stuck.text || stuck.label, "；已点弹层次数:", popupHits);
+            await sleepMs(1200);
+          } else if (clickedConfirm > 0) {
+            console.log("[提交] 第 " + attempt + " 次结束：确认弹层已点掉、无失败提示，判定提交成功（最后弹层:", lastPopupText || "(无)", "）");
+            ok = true;
+          } else {
+            // ★ 没有任何“已提交”的正向证据时，绝不判成功。
+            //   旧实现走到这里会无条件 ok = true（“无失败提示、无残留弹层”=成功），
+            //   于是弹层没人点、提交根本没发生，脚本却报“章节测验已完成，全部答出”并自动跳到下一章。
+            unconfirmed = true;
+            console.log("[提交][诊断] 第 " + attempt + " 次：未找到确认弹层，也未捕获成功/失败提示；可见候选:", dumpCandidates());
+            if (attempt < 2) await sleepMs(1200);
+          }
+        }
+      } finally {
+        restorePopups();
+      }
+      if (wasAborted) {
+        this.askStore.log("提交过程中检测到手动切换章节，已中止提交", "info");
+        return "aborted";
+      }
+      if (needManual) {
+        this.askStore.log("需要人工处理（" + needManual + "），已停止自动提交与跳章", "error");
+        return false;
+      }
+      if (!ok && answersBad) {
+        this.askStore.log("页面上没有可提交的答案（答案没写进页面模型，或被页面刷新/失败重载清空），自动补写未成功，已拒绝提交空白答案并停止自动跳章，请手动检查", "error");
+        return false;
+      }
+      if (!ok && failedAny) {
+        // ★ 明确捕获到页面的失败提示（如 alert“作业提交失败！”）→ 就是失败，不能含糊成 unconfirmed
+        this.askStore.log("章节测验提交失败（页面返回失败提示），已停止自动跳章，请手动检查并提交", "error");
+        return false;
+      }
+      if (!ok) {
+        this.askStore.log("未能确认提交结果（未检测到确认弹层，也未捕获成功/失败提示），已停止自动跳章，请手动确认", "error");
+        return "unconfirmed";
+      }
+      return true;
     }
     homework() {
       return new Promise(async (resolve) => {
@@ -1687,7 +2507,6 @@
     }
   }
   const pinia = pinia$1.createPinia(), app = vue.createApp(App).use(ElementPlus).use(pinia), _self = _unsafeWindow, top = _self.top, formStore = useformStore();
-  var iframeCom = null;
   switch (app.mount((() => {
     try {
       const div = top.document.createElement("div");
@@ -1714,19 +2533,77 @@
       }
       const cxModel = new Cx();
       cxModel.askStore.log("脚本初始化成功！", "success");
-      let isWorking = false;
+      // 构建标识：用于从 F12 控制台直接确认“当前实际运行的到底是哪一版脚本”，
+      // 专门解决“本地明明改好了、篡改猴里却还是旧副本”的排查难题
+      const BUILD_TAG = "1.2.5-20261011d";
+      try {
+        console.log("[构建] 学习通AI助手 已加载 | version=1.2.5 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交→调noSubmit暂存答案 / 元数据加@connect*(任意API域名可用)");
+      } catch (e) {}
+      // ===== 章节任务调度（支持“手动切章抢占”）=====
+      // runningTask  是否有章节任务正在执行
+      // taskEpoch    任务代次：+1 即让正在跑的任务在下一个检查点自行中止
+      // handledKey   已交给任务处理的“规范化地址标识”（防止同一章节重复执行）
+      // pendingKey   任务执行期间用户切换到的新内容标识（旧任务退出后立即接手）
+      let runningTask = false, taskEpoch = 0, handledKey = null, pendingKey = null, navSeen = false, seenKey = null, seenTimes = 0;
+      const SLOG = function() { try { console.log.apply(console, ["[调度]"].concat([].slice.call(arguments))); } catch (e) {} };
+      const shortUrl = (u) => {
+        if (!u) return String(u);
+        const m = u.match(/[?&]chapterId=(\d+)/);
+        return (m ? "ch" + m[1] : String(u).slice(0, 110)) + (String(u).length > 110 ? "…" : "");
+      };
+      // 规范化：剔除每次重载都可能被重新生成的会话令牌（enc/cpi/openc），
+      // 否则页面自己刷新一下（参数重发）就会被误判成“用户切章”，导致正在答题的任务被无故中止、整章重跑
+      const VOLATILE_PARAM = /^(enc|cpi|openc|fragmentid)$/i;
+      const normalizeUrl = (u) => {
+        if (!u) return u;
+        try {
+          const i = String(u).indexOf("?");
+          if (i < 0) return String(u);
+          const base = String(u).slice(0, i);
+          const qs = String(u).slice(i + 1).split("&").filter(function(p) {
+            return p && !VOLATILE_PARAM.test(p.split("=")[0]);
+          }).sort();
+          return base + "?" + qs.join("&");
+        } catch (e) { return u; }
+      };
+      const readChapterUrl = () => {
+        try {
+          const f = _self.document.querySelector("#iframe");
+          return f && f.contentWindow ? f.contentWindow.location.href : null;
+        } catch (e) { return null; }
+      };
+      const readChapterKey = () => normalizeUrl(readChapterUrl());
       const startWork = async () => {
-        if (isWorking) return;
-        isWorking = true;
+        if (runningTask) return;
+        runningTask = true;
+        const myEpoch = ++taskEpoch;
+        const aborted = () => myEpoch !== taskEpoch;
+        const ctx = { aborted };
+        let bailed = false;
+        const bail = () => {
+          if (bailed) return;   // 一轮里会被多个检查点调用，只提示/记录一次
+          bailed = true;
+          SLOG("任务中止(epoch " + myEpoch + ")：检测到用户已切换内容");
+          cxModel.askStore.log("检测到已手动切换章节，已中止当前任务", "info");
+        };
+        let submitFailedThisRound = false, doneChapterUrl = null;
         try {
         var _a, _b, _c, _d, _e;
         await waitElementLoaded(_self, "#iframe");
+        if (aborted()) return bail();
         const cardsIframe = _self.document.querySelector("#iframe");
+        if (!cardsIframe) return;
         await waitIframeLoaded(cardsIframe);
+        if (aborted()) return bail();
         const _self1 = cardsIframe.contentWindow;
+        if (!_self1) return;
+        const startChapterUrl = _self1.location.href;
+        const startChapterKey = normalizeUrl(startChapterUrl);
+        SLOG("开始处理:", shortUrl(startChapterUrl), "(epoch " + myEpoch + ")");
         top.scroll2Job && top.scroll2Job();
         let jobList = _self1.document.querySelectorAll(".ans-job-icon") || [];
         for (let i = 0; i < jobList.length; i++) {
+          if (aborted()) { bail(); break; }
           const item = jobList[i];
           if ((_a = item.parentElement) == null ? void 0 : _a.classList.contains("ans-job-finished")) {
             const iframe = (_b = item.parentElement) == null ? void 0 : _b.querySelector("iframe");
@@ -1739,36 +2616,130 @@
           } else {
             const iframe = (_d = item.parentElement) == null ? void 0 : _d.querySelector("iframe");
             await waitIframeLoaded(iframe);
+            if (aborted()) { bail(); break; }
             const otherInfo = JSON.parse(iframe.getAttribute("data"));
             if (cxModel.askStore.log(`正在完成任务:${otherInfo.name || otherInfo.title}`), iframe == null ? void 0 : iframe.src.match(/\/ananas\/modules\/video\/index\.html/)) {
               if (!formStore.forminput.autoVideo) {
                 cxModel.askStore.log("视频任务已跳过", "success");
                 continue;
               }
-              await cxModel.video(iframe.contentWindow), cxModel.askStore.log("视频任务已完成", "success");
+              await cxModel.video(iframe.contentWindow, ctx);
+              if (aborted()) { bail(); break; }
+              cxModel.askStore.log("视频任务已完成", "success");
             } else if (iframe == null ? void 0 : iframe.src.match(/\/ananas\/modules\/work\/index.html/)) {
+              if (false === formStore.forminput.autoAnswer) {   // ★「自动答题」开关：显式关闭才跳过（原先该开关是死的，永不读取；用 ===false 防老配置缺键被误判为关闭）
+                cxModel.askStore.log("自动答题已关闭，跳过本节测验/作业", "success");
+                continue;
+              }
               cxModel.askStore.log("即将开始做作业", "info");
               const workIframe = (_e = iframe.contentWindow) == null ? void 0 : _e.document.querySelector("iframe");
-              workIframe && (await waitIframeLoaded(workIframe), await cxModel.work(workIframe.contentWindow), cxModel.askStore.log("作业任务已完成", "success"));
+              if (workIframe) {
+                await waitIframeLoaded(workIframe), await cxModel.work(workIframe.contentWindow, ctx);
+                if (aborted()) { bail(); break; }
+                if (cxModel.askStore.submitFailed) submitFailedThisRound = true;
+                cxModel.askStore.log("作业任务已完成", "success");
+              }
             } else if (iframe == null ? void 0 : iframe.src.match(/\/ananas\/modules\/audio\/index.html/)) {
               if (log("音频", "error"), !formStore.forminput.autoVideo) {
                 cxModel.askStore.log("音频任务已跳过", "success");
                 continue;
               }
-              iframe && (await waitIframeLoaded(iframe), await cxModel.audio(iframe.contentWindow), cxModel.askStore.log("音频任务已完成", "success"));
+              if (iframe) {
+                await waitIframeLoaded(iframe);
+                if (aborted()) { bail(); break; }
+                await cxModel.audio(iframe.contentWindow, ctx);
+                if (aborted()) { bail(); break; }
+                cxModel.askStore.log("音频任务已完成", "success");
+              }
             } else
               (iframe == null ? void 0 : iframe.src.match(/\/ananas\/modules\/pdf\/index.html/)) ? (log("文档", "error"), iframe && (await waitIframeLoaded(iframe), await cxModel.pdf(iframe.contentWindow), cxModel.askStore.log("pdf任务已完成", "success"))) : (console.log(iframe == null ? void 0 : iframe.src, "未知"), cxModel.askStore.log("未知任务跳过", "success"));
           }
         }
-        await sleep(formStore.forminput.interval), !formStore.forminput.autoJump && cxModel.askStore.msg("由于未开启自动切换,请手动切换"), formStore.forminput.autoJump && (top == null ? void 0 : top.document.querySelector(".nextChapter").click());
-        } finally { isWorking = false; }
+        await sleep(formStore.forminput.interval);
+        if (aborted()) return bail();
+        const curChapterUrl = readChapterUrl() || startChapterUrl;
+        // 只有“整轮都停留在本节”才算真正处理完；若期间地址已变（按规范化后比对，忽略会话令牌抖动），
+        // 说明新内容尚未被处理，这里绝不能把它记成已处理，否则会被永久跳过（finally 里会按当前地址重开任务）
+        const stayedPut = normalizeUrl(curChapterUrl) === startChapterKey;
+        doneChapterUrl = stayedPut ? curChapterUrl : null;
+        SLOG("本轮结束判定: 停留本节=" + stayedPut + "，当前=" + shortUrl(curChapterUrl));
+        if (submitFailedThisRound) {
+          cxModel.askStore.log("检测到本章节提交失败，已停止自动跳章，请手动提交", "error");
+        } else if (!stayedPut) {
+          cxModel.askStore.log("检测到已手动切换内容，跳过自动跳章", "info");
+        } else if (!formStore.forminput.autoJump) {
+          cxModel.askStore.msg("由于未开启自动切换,请手动切换");
+        } else {
+          const nextChapterBtn = top == null ? void 0 : top.document.querySelector(".nextChapter");
+          nextChapterBtn && nextChapterBtn.click();
+        }
+        } catch (e) {
+          console.error("[超星AI助手]", e);
+        } finally {
+          runningTask = false;
+          pendingKey = null;
+          navSeen = false;
+          const curKey = readChapterKey();
+          if (doneChapterUrl) {
+            // 正常跑完：记下本节；若这期间用户已手动切走，立即接手用户当前所在内容
+            handledKey = normalizeUrl(doneChapterUrl);
+            if (curKey && curKey !== handledKey) {
+              SLOG("正常结束后地址已变，立即接手:", shortUrl(readChapterUrl()));
+              handledKey = curKey;
+              cxModel.askStore.reset();
+              startWork();
+            }
+          } else if (curKey) {
+            // 被手动切章抢占：本任务未完成任何内容，直接按用户“当前实际所在”的内容重开任务
+            // （注意不能用被抢占前的旧地址记账，否则「切走再切回同一章」会被误判为已处理而永远不填）
+            SLOG("本任务被抢占/未完成，按当前内容重开:", shortUrl(readChapterUrl()));
+            handledKey = curKey;
+            cxModel.askStore.reset();
+            startWork();
+          } else {
+            handledKey = null;
+          }
+        }
       };
       setInterval(async () => {
-        await waitElementLoaded(_self, "#iframe");
-        const cardsIframe = _self.document.querySelector("#iframe");
-        await waitIframeLoaded(cardsIframe);
-        const _self1 = cardsIframe.contentWindow;
-        iframeCom != _self1.location.href && (iframeCom = _self1.location.href, cxModel.askStore.reset(), startWork());
+        try {
+          await waitElementLoaded(_self, "#iframe");
+          const cardsIframe = _self.document.querySelector("#iframe");
+          if (!cardsIframe) return;
+          await waitIframeLoaded(cardsIframe);
+          if (!cardsIframe.contentWindow) return;
+          const curUrl = readChapterUrl();
+          const curKey = normalizeUrl(curUrl);
+          if (!curKey) return;
+          // 连续两轮看到同一地址才算“稳定”
+          if (curKey === seenKey) seenTimes++; else { seenKey = curKey; seenTimes = 1; }
+          // 地址离开了“已处理内容” → 记一次导航（用于识别“切走再切回同一章”：回来时地址虽相同，但页面已重载）
+          if (curKey !== handledKey) navSeen = true;
+          // 无事可做：地址就是已处理内容，且期间没有离开过
+          if (curKey === handledKey && !navSeen) return;
+          // 已有处理记录时，地址变化需连续两轮稳定才认定为用户切换（过滤瞬时中间态）
+          if (handledKey !== null && seenTimes < 2) {
+            SLOG("地址变化待确认(" + seenTimes + "/2):", shortUrl(curUrl));
+            return;
+          }
+          if (runningTask) {
+            // 任务执行中检测到用户切换：抢占旧任务（它在下一个检查点自行退出），退出后立即接手新内容
+            if (pendingKey !== curKey) {
+              pendingKey = curKey;
+              const oldEpoch = taskEpoch;
+              taskEpoch++;
+              SLOG("抢占：中止当前任务(epoch " + oldEpoch + "→" + taskEpoch + ")，目标:", shortUrl(curUrl));
+              cxModel.askStore.log("检测到手动切换章节，正在中止当前任务并切换…", "info");
+            }
+            return;
+          }
+          handledKey = curKey;
+          navSeen = false;
+          cxModel.askStore.reset();
+          SLOG("开始处理:", shortUrl(curUrl));
+          startWork();
+        } catch (e) {
+        }
       }, 2e3);
       break;
     case "/mooc2-ans/mycourse/stu":
@@ -1783,6 +2754,10 @@
     case "/mooc-ans/mooc2/work/dowork":
     case "/mooc2-ans/mooc2/work/dowork":
       const cxModel1 = new Cx();
+      if (false === formStore.forminput.autoAnswer) {   // ★「自动答题」开关（显式关闭才跳过）
+        cxModel1.askStore.log("自动答题已关闭，跳过本次作业", "success");
+        break;
+      }
       cxModel1.askStore.log("脚本初始化成功！", "success"), await( cxModel1.homework());
       break;
     case "/exam-ans/exam/test/reVersionTestStartNew":
