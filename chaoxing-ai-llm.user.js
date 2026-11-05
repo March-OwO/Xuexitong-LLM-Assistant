@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.2.9
+// @version      1.2.10
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -75,8 +75,8 @@
   var _GM_getResourceText = (() => "undefined" != typeof GM_getResourceText ? GM_getResourceText : void 0)(), _GM_getValue = (() => "undefined" != typeof GM_getValue ? GM_getValue : void 0)(), _GM_info = (() => "undefined" != typeof GM_info ? GM_info : void 0)(), _GM_setValue = (() => "undefined" != typeof GM_setValue ? GM_setValue : void 0)(), _GM_xmlhttpRequest = (() => "undefined" != typeof GM_xmlhttpRequest ? GM_xmlhttpRequest : void 0)(), _unsafeWindow = (() => "undefined" != typeof unsafeWindow ? unsafeWindow : void 0)();
   const getConfig = () => {
     const config = _GM_getValue("config");
-    return config || defaultConfig$1;
-  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", interval: 5, answerInterval: 5, autoExam: true }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek；支持任意厂商/自建/中转站域名——本脚本已声明 @connect *，首次请求新域名时请在篡改猴弹框点『始终允许所有域』即可永久放行" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
+    return config ? Object.assign({}, defaultConfig$1, config) : defaultConfig$1;
+  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", interval: 5, answerInterval: 5, autoExam: true, thinkingMode: "auto", thinkingLevel: "auto" }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek；支持任意厂商/自建/中转站域名——本脚本已声明 @connect *，首次请求新域名时请在篡改猴弹框点『始终允许所有域』即可永久放行" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash" }, { name: "thinkingMode", label: "思考模式", type: "select", value: defaultConfig$1.thinkingMode, options: [{ value: "auto", label: "默认（不传）" }, { value: "on", label: "开启" }, { value: "off", label: "关闭" }], desc: "默认不传思考参数。开启/关闭分别发送 thinking.type=enabled/disabled；不同厂商字段可能不同，接口不兼容时请保持默认" }, { name: "thinkingLevel", label: "思考强度", type: "select", value: defaultConfig$1.thinkingLevel, options: [{ value: "auto", label: "默认（不传）" }, { value: "low", label: "低" }, { value: "medium", label: "中" }, { value: "high", label: "高" }], desc: "选择后发送 reasoning_effort（low/medium/high）。部分模型/中转站可能不支持，接口报错时请保持默认" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
     _GM_setValue("config", forminput);
   } } });
   var export_helper_default = (sfc, props) => {
@@ -124,12 +124,14 @@
     async getAIAnswer(questionData) {
       defaultConfig = getConfig(); // 每次都重新读取最新配置（用户可能已更新 API Key）
       const apiKey = defaultConfig.thtoken || "";
-      // AI 请求超时（毫秒）：与 max_tokens=1000 匹配 —— 1000 token 的输出在 20s 内常来不及（尤其推理模型）。
+      // AI 请求超时（毫秒）：推理模型 / 长答案经常超过 45s，放宽到 90s，减少“等不到答案就被跳过”。
       // ⚠️ 必须与 _callAI 的 timeout 保持一致，故抽成常量，避免两处硬编码漂移。
-      const timeoutMs = 45000;
+      const timeoutMs = 90000;
       // 支持多提供商：默认 DeepSeek V4 Flash，也可通过配置指定其他兼容端点
       const apiUrl = defaultConfig.aiApiUrl || "https://api.deepseek.com/v1/chat/completions";
       const model = defaultConfig.aiModel || "deepseek-v4-flash";
+      const thinkingMode = defaultConfig.thinkingMode || "auto";
+      const thinkingLevel = defaultConfig.thinkingLevel || "auto";
       const q = (questionData.question || "").toString().trim();
       const type = parseInt(questionData.type);
       const options = questionData.options || [];
@@ -170,18 +172,32 @@
       if (!apiKey) { console.warn("[AI答题] API Key 为空"); return { form: "AI", answer: "", num: "", usenum: "" }; }
 
       // 重试循环：最多 3 次，指数退避 2/4/6 秒，429 额外等待 10 秒
-      // ★ 方案B：**超时不重试** —— 超时＝模型/网络慢，重试几乎必然再超时（3 次 × 45s = 135s 纯浪费）。
-      //   429 限流则仍重试（服务端过载，等一会儿确实可能恢复）。
+      // ★ 超时：允许额外重试 1 次（总共最多 2 次），避免慢模型偶尔抖动就整题无答案。
+      // ★ 未返回答案（空答案）：同样按重试处理，最多 3 次，避免直接跳过题目。
       const MAX_RETRIES = 3;
+      const MAX_TIMEOUT_RETRIES = 1;
+      const hasAnswer = (res) => {
+        if (!res || res.empty === true) return false;
+        const a = res.answer;
+        if (typeof a === "string") return a.trim().length > 0;
+        if (Array.isArray(a)) return a.some((x) => String(x == null ? "" : x).trim().length > 0);
+        return a != null && String(a).trim().length > 0;
+      };
       let lastError = null;
+      let timeoutRetried = 0;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options, { timeoutMs: timeoutMs });
+          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options, { timeoutMs: timeoutMs, thinkingMode: thinkingMode, thinkingLevel: thinkingLevel });
           if (result.retry === true) {
             if (result.isTimeout) {
-              // 超时直接放弃：不再重试，避免一题拖到 2 分钟以上
-              console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），不重试，本题按「无答案」处理");
               lastError = result.reason;
+              if (timeoutRetried < MAX_TIMEOUT_RETRIES && attempt < MAX_RETRIES) {
+                timeoutRetried++;
+                console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），第" + attempt + "次，将重试 1 次...");
+                await new Promise(r => setTimeout(r, 2000));
+                continue;
+              }
+              console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），重试次数已用完，本题按「无答案」处理");
               break;
             }
             // 429 或其它可重试错误
@@ -189,6 +205,27 @@
             console.warn("[AI答题] 第" + attempt + "次尝试失败" + (result.is429 ? "(429限流)" : "") + "，" + waitSec + "秒后重试...");
             await new Promise(r => setTimeout(r, waitSec * 1000));
             lastError = result.reason;
+            continue;
+          }
+          // 不可重试的错误（如密钥无效）：直接返回，不进入空答案重试
+          if (result.noRetry === true) {
+            console.warn("[AI答题] 不可重试的错误，本题按「无答案」处理");
+            return result;
+          }
+          // finish_reason=length 表示输出被 max_tokens 截断：重试，避免把残缺答案交给填题
+          if (result.truncated === true) {
+            lastError = "finish_reason=length";
+            console.warn("[AI答题] 第" + attempt + "次输出被截断（finish_reason=length，max_tokens=2000）" + (attempt < MAX_RETRIES ? "，准备重试..." : "，已达最大重试次数，保留本次结果"));
+            if (attempt < MAX_RETRIES) {
+              await new Promise(r => setTimeout(r, attempt * 2000));
+              continue;
+            }
+          }
+          // 成功但未返回答案：重试，避免直接跳过本题
+          if (!hasAnswer(result)) {
+            lastError = "AI未返回答案";
+            console.warn("[AI答题] 第" + attempt + "次返回空答案，准备重试...");
+            if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, attempt * 2000));
             continue;
           }
           // 成功
@@ -206,14 +243,31 @@
     // 内部方法：发起单次 AI API 调用
     _callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options) {
       return new Promise((resolve) => {
-        // 超时可由调用方经 options.timeoutMs 指定（默认 45s），保证与上层「超时不重试」判定用的是同一个值
-        const _timeoutMs = (options && options.timeoutMs) || 45000;
+        // 超时可由调用方经 options.timeoutMs 指定（默认 90s），保证与上层「超时」判定用的是同一个值
+        const _timeoutMs = (options && options.timeoutMs) || 90000;
+        const _thinkingMode = (options && options.thinkingMode) || "auto";
+        const _thinkingLevel = (options && options.thinkingLevel) || "auto";
+        const payload = {
+          model,
+          stream: false,
+          messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
+          temperature: 0.1,
+          max_tokens: 2000
+        };
+        // 思考模式：默认不传，避免不兼容的接口直接 400；开启/关闭使用通用 thinking.type
+        if (_thinkingMode === "on" || _thinkingMode === "off") {
+          payload.thinking = { type: _thinkingMode === "on" ? "enabled" : "disabled" };
+        }
+        // 思考强度：OpenAI 兼容的 reasoning_effort
+        if (_thinkingLevel !== "auto") {
+          payload.reasoning_effort = _thinkingLevel;
+        }
         _GM_xmlhttpRequest({
           method: "POST",
           url: apiUrl,
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + apiKey },
-          data: JSON.stringify({ model, stream: false, messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }], temperature: 0.1, max_tokens: 1000 }),
-          timeout: _timeoutMs, // 与 max_tokens=1000 匹配：1000 token 的输出在 20s 内常来不及（尤其推理模型）→ 45s（由上层传入）
+          data: JSON.stringify(payload),
+          timeout: _timeoutMs, // 默认 90s（由上层传入），给推理模型和长答案留足时间
           onload: (res) => {
             console.log("[AI答题] HTTP", res.status, "长度", (res.responseText||"").length);
             if (res.status === 429 || res.status >= 500) {
@@ -224,7 +278,7 @@
               console.error("[AI答题] 错误响应:", res.status, (res.responseText||"").substring(0, 200));
               // 非429错误直接放弃（如401密钥错误等）
               if (res.status === 401 || res.status === 403) {
-                resolve({ form: "AI", answer: "", num: "", usenum: "" });
+                resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true, noRetry: true });
                 return;
               }
               resolve({ retry: true, is429: false, reason: "HTTP " + res.status });
@@ -232,14 +286,19 @@
             }
             try {
               const j = JSON.parse(res.responseText);
-              let ans = (j.choices && j.choices[0].message.content || "").trim();
+              const choice = j.choices && j.choices[0];
+              const finishReason = (choice && choice.finish_reason) || "";
+              let ans = (choice && choice.message && choice.message.content || "").trim();
               // 去除推理模型（DeepSeek-R1 / 思考模式等）残留的思维链标签及其内容，
               // 否则思维链里的英文字母(A/B/C/D)会被误当作选项，导致答案错误或为空
               ans = ans.replace(/[\s\S]*?<\/think>/gi, "").replace(/<\/?(?:think|thinking|reasoning)>/gi, "").trim();
-              console.log("[AI答题] 原始返回:", ans);
+              let emptyAnswer = !ans;
+              const truncated = "length" === finishReason;
+              console.log("[AI答题] 原始返回:", ans, "| finish_reason:", finishReason || "(空)");
+              if (truncated) console.warn("[AI答题] finish_reason=length，输出被 max_tokens=2000 截断");
               // 诊断：内容为空多为「输出被 max_tokens 截断」或「输出全部消耗在思维链上」，
               //   此时题目会拿不到答案（页面答案模型必然为空），排查先看这一行。
-              if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=1000 截断，或全部消耗在思维链里）→ 本题将无答案可填");
+              if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=2000 截断，或全部消耗在思维链里）→ 本题将无答案可填");
               // 选择题：字母 → 选项文本映射（matchAnswer 做文本精确匹配）
               if (type === 0) {
                 ans = (ans.match(/[A-Da-d]/) || [])[0] || ans;
@@ -263,8 +322,21 @@
                   ans = parts.length ? parts : [ans];
                 }
               } else if (type === 3) {
-                if (ans.includes("正确")||ans.includes("对")||ans.includes("True")||ans.includes("true")||ans.includes("√")||ans.includes("T")) ans = "正确";
-                else ans = "错误";
+                if (ans) {
+                  const rawJudgment = ans;
+                  const norm = ans
+                    .replace(/^(?:答案|结果|判断)\s*[:：为是]?\s*/, "")
+                    .replace(/[\s"'“”‘’。．.，,！!？?：:；;、]/g, "")
+                    .toLowerCase();
+                  // 精确匹配：避免「不对」因为包含「对」被误判为正确
+                  if (/^(正确|对|是|真|true|t|√|✓|ri|yes|y)$/.test(norm)) ans = "正确";
+                  else if (/^(错误|错|否|假|false|f|×|✗|x|wr|no|n)$/.test(norm)) ans = "错误";
+                  else {
+                    console.warn("[AI答题] 判断题返回无法精确识别:", rawJudgment, "→ 按无答案处理并重试");
+                    ans = "";
+                    emptyAnswer = true;
+                  }
+                }
               }
               if (type === 2 && ans.includes("#")) ans = ans.split("#");
               const usage = j.usage || {};
@@ -272,10 +344,10 @@
               const completionTokens = usage.completion_tokens || 0;
               const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
               console.log("[AI答题] Token消耗: 输入", promptTokens, "输出", completionTokens, "合计", totalTokens);
-              resolve({ form: "AI", answer: ans, num: promptTokens, usenum: completionTokens, totalTokens: totalTokens });
-            } catch (e) { resolve({ form: "AI", answer: "", num: "", usenum: "" }); }
+              resolve({ form: "AI", answer: ans, num: promptTokens, usenum: completionTokens, totalTokens: totalTokens, empty: emptyAnswer, finishReason: finishReason, truncated: truncated });
+            } catch (e) { resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true }); }
           },
-          // 超时标记：超时属于「模型慢」，重试大概率还是慢 → 由上层直接放弃（不浪费 3 倍时间）
+          // 超时标记：由上层决定是否重试（当前策略为最多额外重试 1 次，避免无限等待）
           onerror: () => { resolve({ retry: true, is429: false, reason: "网络错误" }); },
           ontimeout: () => { resolve({ retry: true, is429: false, isTimeout: true, reason: "超时" }); }
         });
@@ -2654,9 +2726,9 @@
       cxModel.askStore.log("脚本初始化成功！", "success");
       // 构建标识：用于从 F12 控制台直接确认“当前实际运行的到底是哪一版脚本”，
       // 专门解决“本地明明改好了、篡改猴里却还是旧副本”的排查难题
-      const BUILD_TAG = "1.2.9-20261011h";
+      const BUILD_TAG = "1.2.10-20261103a";
       try {
-        console.log("[构建] 学习通AI助手 已加载 | version=1.2.9 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / max_tokens=1000 / timeout=45s且超时不重试 / 元数据加@connect*(任意API域名可用)");
+        console.log("[构建] 学习通AI助手 已加载 | version=1.2.10 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / max_tokens=2000 / finish_reason截断重试 / 思考模式+强度可选 / 判断题精确匹配 / timeout=90s(超时额外重试1次) / 空答案自动重试 / 元数据加@connect*(任意API域名可用)");
       } catch (e) {}
       // ===== 章节任务调度（支持“手动切章抢占”）=====
       // runningTask  是否有章节任务正在执行
