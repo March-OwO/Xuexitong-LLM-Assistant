@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.2.10
+// @version      1.2.11
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -141,31 +141,35 @@
       console.log("[AI答题] 第", (window._aiQIdx||0)+1, "题, 类型:", type, "题目:", q.substring(0, 80));
 
       // 根据题型构造不同的 system prompt
+      // ★ 通用约束：解析器会从纯文本里抽取字母/字词，输出里任何多余内容都可能被误读成答案，
+      //   因此统一要求「只输出答案本身」，并禁止留空（留空会触发重试，最终本题无答案）。
+      const CORE_ROLE = "你是严谨的多学科考试答题专家，熟悉各学科题目和生活常识的标准表述与主流结论。";
+      const STRICT_OUT = "先在内部完成推理，但只输出最终答案本身：不要解释、不要推理过程、不要引号、不要标点、不要序号说明、不要使用 Markdown、不要出现任何与答案无关的英文单词或字母。即使不确定也必须给出最可能的答案，禁止输出“无法确定”“不确定”或留空。";
       let sysPrompt = "";
       let userPrompt = q;
       switch (type) {
         case 0:
-          sysPrompt = "你是超星学习通答题助手。请仔细阅读题目和选项，选出唯一正确答案。只输出选项字母（如 A），不要输出任何解释、标点或多余文字。";
-          userPrompt = optionsText ? `${q}\n\n选项：\n${optionsText}\n\n请输出正确答案的字母。` : q;
+          sysPrompt = CORE_ROLE + "请通读题干与全部选项，特别留意否定词（不、不属于、不正确、除了）、限定条件、数字与单位，逐一排除不符合题意的选项，选出唯一最正确答案；若多个选项看似合理，取与题干限定最吻合、表述最完整的一个。" + STRICT_OUT + "只输出该选项的一个大写字母（如 A）。";
+          userPrompt = optionsText ? `${q}\n\n选项：\n${optionsText}\n\n请只输出唯一正确选项的字母。` : q;
           break;
         case 1:
-          sysPrompt = "你是超星学习通答题助手。请仔细阅读题目和选项，选出所有正确答案。只输出选项字母（如 ABD 或 ABCD），不要输出任何解释、标点或多余文字。";
-          userPrompt = optionsText ? `${q}\n\n选项：\n${optionsText}\n\n请输出所有正确答案的字母。` : q;
+          sysPrompt = CORE_ROLE + "请通读题干与全部选项，特别留意否定词（不、不属于、不正确、除了）、限定条件与并列关系，选出所有符合题意的正确选项（可能有一项或多项）。" + STRICT_OUT + "只输出正确选项的大写字母并按字母顺序连写（如 ABD），不要包含任何错误选项的字母。";
+          userPrompt = optionsText ? `${q}\n\n选项：\n${optionsText}\n\n请只输出所有正确选项的字母（按顺序连写）。` : q;
           break;
         case 2:
-          sysPrompt = "你是超星学习通答题助手。请根据题目填写空白处。如果有多个空，答案之间用 # 分隔。只输出答案内容，不要任何解释。";
-          userPrompt = `${q}\n\n请输出填空答案，多个空用 # 分隔。`;
+          sysPrompt = CORE_ROLE + "请按题干中空格出现的先后顺序，为每个空给出简洁答案，使用学科标准术语、专有名词或教材原文表述，保持大小写、数字、公式和单位原样，不要扩写、改写或补充解释。" + STRICT_OUT + "只有一个空时只输出该答案；有多个空时按顺序用 # 分隔（如 答案一#答案二），答案内容中不得再出现 # 符号。";
+          userPrompt = `${q}\n\n请按空格顺序输出填空答案，多个空用 # 分隔。`;
           break;
         case 3:
-          sysPrompt = "你是超星学习通答题助手。请判断题目说法是否正确。只输出一个字：「正确」或「错误」，不要任何解释。";
-          userPrompt = `${q}\n\n请判断对错。`;
+          sysPrompt = CORE_ROLE + "请判断题干陈述是否成立，注意绝对化表述（一定、都、必须、只能）、否定词与限定条件，只要有一处与教材表述不符即判为错误。" + STRICT_OUT + "只输出两个字：「正确」或「错误」，不得输出其他任何字符（包括 True/False、对/错、符号）。";
+          userPrompt = `${q}\n\n请判断该说法是否正确，只回答「正确」或「错误」。`;
           break;
         case 4: case 5: case 6: case 7:
-          sysPrompt = "你是超星学习通答题助手。简洁准确地回答问题，控制在200字以内。禁止使用Markdown格式（不要用**加粗**、- 列表、* 斜体等标记），直接输出纯文本答案要点。";
-          userPrompt = `${q}\n\n请简要回答，不要使用任何格式标记。`;
+          sysPrompt = CORE_ROLE + "请先明确题目考查的核心概念或结论，再给出必要的关键依据或步骤，语言精炼、术语规范准确，控制在200字以内；需要分条时以「1. 2. 3.」开头。" + STRICT_OUT;
+          userPrompt = `${q}\n\n请简要作答（200字以内，纯文本，不要任何格式标记）。`;
           break;
         default:
-          sysPrompt = "你是超星学习通答题助手。请简洁准确地回答题目。只输出答案，不要多余解释。";
+          sysPrompt = CORE_ROLE + STRICT_OUT + "请简洁准确地作答。";
       }
 
       if (!q) return { form: "AI", answer: "", num: "", usenum: "" };
@@ -252,7 +256,7 @@
           stream: false,
           messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: 5000
         };
         // 思考模式：默认不传，避免不兼容的接口直接 400；开启/关闭使用通用 thinking.type
         if (_thinkingMode === "on" || _thinkingMode === "off") {
