@@ -256,7 +256,7 @@
           stream: false,
           messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
           temperature: 0.1,
-          max_tokens: 5000
+          max_tokens: 2000
         };
         // 思考模式：默认不传，避免不兼容的接口直接 400；开启/关闭使用通用 thinking.type
         if (_thinkingMode === "on" || _thinkingMode === "off") {
