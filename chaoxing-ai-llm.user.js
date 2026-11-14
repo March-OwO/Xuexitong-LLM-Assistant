@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.2.11
+// @version      1.2.12
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -432,8 +432,14 @@
               //   此时题目会拿不到答案（页面答案模型必然为空），排查先看这一行。
               if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=" + _maxTokens + " 截断，或全部消耗在思维链里）→ 本题将无答案可填");
               // 选择题：字母 → 选项文本映射（matchAnswer 做文本精确匹配）
+              // ★ 1.2.12：字母表按本题**实际选项数**动态生成，不再写死 A-D。
+              //   旧版写死 A-D ⇒ 5 个选项的题（思政 / 医学 / 法学习题常见）单选永远选不到 E、
+              //   多选漏选 E/F，而且是**静默的**：日志会显示「已写入」，实际只对了一半。
+              //   options 缺失时退回 4（A-D），与旧行为一致，不制造新回归。
+              const _pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(0, Math.max(1, Math.min(26, (options && options.length) || 4)));
+              const _poolLo = _pool.toLowerCase();
               if (type === 0) {
-                ans = (ans.match(/[A-Da-d]/) || [])[0] || ans;
+                ans = (ans.match(new RegExp("[" + _pool + _poolLo + "]")) || [])[0] || ans;
                 ans = ans.toUpperCase();
                 const idx = ans.charCodeAt(0) - 65;
                 if (idx >= 0 && idx < options.length) {
@@ -441,15 +447,15 @@
                   ans = options[idx];
                 }
               } else if (type === 1) {
-                const letters = (ans.match(/[A-Da-d]+/g) || []).join("").toUpperCase();
-                const uniq = [...new Set(letters.split(""))].filter(c => c >= "A" && c <= "D").sort().join("");
+                const letters = (ans.match(new RegExp("[" + _pool + _poolLo + "]+", "g")) || []).join("").toUpperCase();
+                const uniq = [...new Set(letters.split(""))].filter(c => -1 !== _pool.indexOf(c)).sort().join("");
                 if (uniq) {
                   const texts = uniq.split("").map(c => { const idx = c.charCodeAt(0) - 65; return (idx >= 0 && idx < options.length) ? options[idx] : c; });
                   console.log("[AI答题] 多选 " + uniq + " → 选项文本:", texts.join(", "));
                   ans = texts;
                 } else {
                   // 兼容部分模型直接返回选项文本的情况：按分隔符切分后交给文本精确匹配
-                  const parts = ans.split(/[，,、;；\n]|\s{2,}/).map(s => s.replace(/^[A-Da-d][\.、\)．]\s*/, "").trim()).filter(Boolean);
+                  const parts = ans.split(/[，,、;；\n]|\s{2,}/).map(s => s.replace(new RegExp("^[" + _pool + _poolLo + "][\\.、\\)．]\\s*"), "").trim()).filter(Boolean);
                   console.log("[AI答题] 多选(文本返回) →", parts.join(", "));
                   ans = parts.length ? parts : [ans];
                 }
@@ -1697,11 +1703,21 @@
       for (let i = 0; i < decodedData.length; i++)
         array[i] = decodedData.charCodeAt(i);
       return array;
-    })(fontMatch[1]), font = Typr$1.parse(fontData), table = JSON.parse(_GM_getResourceText("ttf"));
+    })(fontMatch[1]);
+    // ★ 1.2.12：@resource 指向个人域名，挂掉或返回非 JSON 时 JSON.parse 会抛错。
+    //   decode() 现在作业 / 考试页也会调用 —— 不兜住就会把整个答题流程带崩（Promise 永不 resolve）。
+    let font = null, table = null;
+    try {
+      font = Typr$1.parse(fontData), table = JSON.parse(_GM_getResourceText("ttf"));
+    } catch (e) {
+      console.warn("[字体解码] ttf 资源不可用或解析失败，跳过解码（本题题干可能显示为乱码）:", e);
+      return;
+    }
     let text = {};
     for (let i = 19968; i < 40870; i++) {
       let t = Typr$1.U.codeToGlyph(font, i);
-      t && (t = Typr$1.U.glyphToPath(font, t), t = md5(JSON.stringify(t)).slice(24), text[i] = table[t]);
+      // ★ 1.2.12：映射表缺该字形时保持原字符。旧版会写入 undefined → \u0000，把题干污染成不可见字符。
+      t && (t = Typr$1.U.glyphToPath(font, t), t = md5(JSON.stringify(t)).slice(24), table[t] && (text[i] = table[t]));
     }
     iframeWindow.document.querySelectorAll(".font-cxsecret").forEach((fontElement) => {
       let html = fontElement.innerHTML;
@@ -2838,6 +2854,9 @@
     }
     homework() {
       return new Promise(async (resolve) => {
+        // ★ 1.2.12：作业页同样可能是字体加密题面 —— 先解码，否则送给 AI 的是乱码。
+        //   旧版 decode() 只在章节测验 work() 里调用，作业/考试页命中加密题时必然全错。
+        decode(_unsafeWindow);
         const Timu = _unsafeWindow.document.querySelectorAll(".questionLi");
         if (!Timu)
           return void resolve();
@@ -2867,10 +2886,15 @@
           tmp ? (this.askStore.get(i).status = "primary", this.askStore.get(i).answer = tmp, succ++) : (this.askStore.get(i).status = "danger", this.askStore.get(i).answer = "暂无答案"), this.askStore.get(i).dom = Timu[i];
         }
         this.askStore.log("作业答题完成：共 " + ques.length + " 题，AI 给出答案 " + aiAnswered + " 题，成功写入页面 " + succ + " 题，耗时 " + fmtSec(Date.now() - answerStarted), aiAnswered === ques.length ? "success" : "error");
+        // ★ 1.2.12：补上 resolve()。旧实现答完从不 resolve ⇒ 调用方 `await homework()` 永远挂起。
+        return void resolve();
       });
     }
     exam() {
       return new Promise(async (resolve) => {
+        // ★ 1.2.12：考试页同样可能是字体加密题面 —— 先解码，否则送给 AI 的是乱码，AI 只能照乱码作答。
+        //   decode() 在找不到 .font-cxsecret / 加密 <style> 时会立即返回，无副作用。
+        decode(_unsafeWindow);
         this.askStore.reset(), this.askStore.count = 1, this.askStore.task.name = "考试";
         this.askStore.log("开始考试答题：模型 " + (this.defaultConfig.aiModel || "默认") + "，答题间隔 " + this.defaultConfig.answerInterval + "s", "info");
         let data = getQuestion("3", _unsafeWindow.document.body);
@@ -2883,14 +2907,34 @@
         tmp
           ? this.askStore.log("第 1 题已写入页面：" + brief(ansText, 200), "success")
           : this.askStore.log("第 1 题写入失败（未匹配到选项/页面未接受），AI答案：" + brief(ansText || "(无)", 200), "error");
-        if (tmp ? (this.askStore.get(0).status = "primary", this.askStore.get(0).answer = tmp) : (this.askStore.get(0).status = "danger", this.askStore.get(0).answer = "暂无答案"), this.defaultConfig.autoExam) {
-          const waitSec = Number(this.defaultConfig.answerInterval) || 0;
-          this.askStore.log("等待 " + waitSec + "s 后自动切换到下一题", "info");
-          await sleep(waitSec);
-          const nextButton = $('.nextDiv .jb_btn:contains("下一题")');
-          nextButton ? nextButton.click() : (this.askStore.log("已完成答题，请自行检查答案填写后自行提交", "success"), this.askStore.task.status = "已完成答题，请自行检查答案填写后自行提交");
-        } else
+        // 记录本题结果（面板状态色 + 展示文本）。tmp 只表示「是否写进页面」，不代表答案正确。
+        if (tmp) {
+          this.askStore.get(0).status = "primary";
+          this.askStore.get(0).answer = tmp;
+        } else {
+          this.askStore.get(0).status = "danger";
+          this.askStore.get(0).answer = "暂无答案";
+        }
+        if (!this.defaultConfig.autoExam) {
           this.askStore.task.status = "未开启自动切换，等待手动切换";
+          return void resolve();
+        }
+        // ★ 1.2.12：考试页答案没写进页面时**绝不自动跳下一题**。
+        //   旧逻辑把 tmp 只用于状态色，只要 autoExam 开启就照样点「下一题」
+        //   ⇒ 空答案题被静默跳过；考试通常不可回改，一跳就是直接丢分，且用户看不到任何提示。
+        if (!tmp) {
+          this.askStore.log("第 1 题未能写入页面（无答案，或未匹配到选项）→ 已停止自动切换，请手动检查本题后再决定是否继续", "error");
+          this.askStore.task.status = "答题异常，已停止自动切换，请手动检查本题";
+          return void resolve();
+        }
+        const waitSec = Number(this.defaultConfig.answerInterval) || 0;
+        this.askStore.log("等待 " + waitSec + "s 后自动切换到下一题", "info");
+        await sleep(waitSec);
+        const nextButton = $('.nextDiv .jb_btn:contains("下一题")');
+        nextButton ? nextButton.click() : (this.askStore.log("已完成答题，请自行检查答案填写后自行提交", "success"), this.askStore.task.status = "已完成答题，请自行检查答案填写后自行提交");
+        // ★ 1.2.12：补上 resolve()。旧实现正常路径从不 resolve ⇒ 调用方 `await exam()` 永远挂起，
+        //   其后的代码（含「脚本初始化成功」日志）实际不会执行。
+        return void resolve();
       });
     }
     pdf(iframeWindow) {
@@ -2933,9 +2977,9 @@
       cxModel.askStore.log("脚本初始化成功！", "success");
       // 构建标识：用于从 F12 控制台直接确认“当前实际运行的到底是哪一版脚本”，
       // 专门解决“本地明明改好了、篡改猴里却还是旧副本”的排查难题
-      const BUILD_TAG = "1.2.11-20261110a";
+      const BUILD_TAG = "1.2.12-20261114a";
       try {
-        console.log("[构建] 学习通AI助手 已加载 | version=1.2.11 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / 最大输出tokens可配(默认4096) / finish_reason截断重试 / 思考模式+强度可选 / 判断题精确匹配 / timeout=90s(超时额外重试1次) / 空答案自动重试 / 元数据加@connect*(任意API域名可用) / 模型列表自动获取+手动选择/输入+连接测试");
+        console.log("[构建] 学习通AI助手 已加载 | version=1.2.12 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / 最大输出tokens可配(默认4096) / finish_reason截断重试 / 思考模式+强度可选 / 判断题精确匹配 / timeout=90s(超时额外重试1次) / 空答案自动重试 / 元数据加@connect*(任意API域名可用) / 模型列表自动获取+手动选择/输入+连接测试 / 选项字母按实际选项数动态生成(5选项不再选不到E) / 考试页无答案不自动跳题 / 作业与考试页也做字体解码");
       } catch (e) {}
       // ===== 章节任务调度（支持“手动切章抢占”）=====
       // runningTask  是否有章节任务正在执行
