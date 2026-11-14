@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         学习通AI学习助手
 // @namespace    https://github.com/March-OwO
-// @version      1.2.10
+// @version      1.2.11
 // @author       March
 // @description  学习通AI助手，使用AI大语言模型(默认DeepSeek)答题，任务点自动跳转，视频文档全自动。
 // @match        *://*.chaoxing.com/*
@@ -57,7 +57,7 @@
 // @run-at       document-end
 // ==/UserScript==
 
-(t=>{if(typeof GM_addStyle=="function"){GM_addStyle(t);return}const i=document.createElement("style");i.textContent=t,document.head.append(i)})(" .dialog-footer button[data-v-6ed29f7f]:first-child{margin-right:10px}#csbutton[data-v-6ed29f7f]{position:fixed;bottom:20px;right:20px;z-index:99999;width:44px;height:44px;background:rgba(64,158,255,0.25)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(64,158,255,0.4)!important;border-radius:50%!important;color:#fff!important;box-shadow:0 4px 16px rgba(64,158,255,0.2);transition:all .3s;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:hidden}#csbutton[data-v-6ed29f7f]:hover{background:rgba(64,158,255,0.4)!important;box-shadow:0 6px 22px rgba(64,158,255,0.35);transform:scale(1.06)}#csbutton[data-v-6ed29f7f] svg,#csbutton[data-v-6ed29f7f] i,#csbutton[data-v-6ed29f7f] span{display:none!important}#csbutton[data-v-6ed29f7f]::after{content:'AI';font-weight:700;font-size:16px;font-family:-apple-system,sans-serif;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}#zeokdjg[data-v-c3c6b09f]{position:fixed;left:10px;bottom:50vh;z-index:9999}.question_btn[data-v-c3c6b09f]{width:40px;height:40px;border-radius:5px;margin:5px}.question_div[data-v-c3c6b09f]{height:200px}.question_ti[data-v-c3c6b09f]{margin:10px 0 20px}.cx_log[data-v-c3c6b09f]{margin:2px 0}.status_log[data-v-c3c6b09f]{margin-top:10px}.dialog-footer button[data-v-c3c6b09f]:first-child{margin-right:10px}#csbutton[data-v-c3c6b09f]{position:fixed;bottom:20px;right:20px;z-index:99999;width:44px;height:44px;background:rgba(64,158,255,0.25)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(64,158,255,0.4)!important;border-radius:50%!important;color:#fff!important;box-shadow:0 4px 16px rgba(64,158,255,0.2);transition:all .3s;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:hidden}#csbutton[data-v-c3c6b09f]:hover{background:rgba(64,158,255,0.4)!important;box-shadow:0 6px 22px rgba(64,158,255,0.35);transform:scale(1.06)}#csbutton[data-v-c3c6b09f] svg,#csbutton[data-v-c3c6b09f] i,#csbutton[data-v-c3c6b09f] span{display:none!important}#csbutton[data-v-c3c6b09f]::after{content:'AI';font-weight:700;font-size:16px;font-family:-apple-system,sans-serif;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.el-empty__image{display:none}.el-empty::before{content:'';display:block;width:32px;height:32px;margin:0 auto 8px;border:2px solid rgba(64,158,255,0.3);border-top-color:rgba(64,158,255,0.6);border-radius:50%;animation:cx-spin 1.5s linear infinite}@keyframes cx-spin{to{transform:rotate(360deg)}}.demo-tabs .el-tabs__nav-wrap::after{display:none}.demo-tabs .el-tabs__nav{display:flex!important;justify-content:space-evenly}.demo-tabs .el-tabs__item{flex:1;text-align:center;padding:0 8px!important}.el-button--primary{--el-button-hover-bg-color:var(--el-color-primary)!important;--el-button-hover-border-color:var(--el-color-primary)!important;--el-button-hover-text-color:#fff!important}.el-button.el-button--primary:hover,.el-button.el-button--primary:focus,.el-button.el-button--primary:active{background-color:var(--el-color-primary)!important;border-color:var(--el-color-primary)!important;color:#fff!important;box-shadow:none!important;transition:none!important}.el-dialog,#zeokdjg{user-select:none;-webkit-user-select:none} ");
+(t=>{if(typeof GM_addStyle=="function"){GM_addStyle(t);return}const i=document.createElement("style");i.textContent=t,document.head.append(i)})(" .dialog-footer button[data-v-6ed29f7f]:first-child{margin-right:10px}#csbutton[data-v-6ed29f7f]{position:fixed;bottom:20px;right:20px;z-index:99999;width:44px;height:44px;background:rgba(64,158,255,0.25)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(64,158,255,0.4)!important;border-radius:50%!important;color:#fff!important;box-shadow:0 4px 16px rgba(64,158,255,0.2);transition:all .3s;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:hidden}#csbutton[data-v-6ed29f7f]:hover{background:rgba(64,158,255,0.4)!important;box-shadow:0 6px 22px rgba(64,158,255,0.35);transform:scale(1.06)}#csbutton[data-v-6ed29f7f] svg,#csbutton[data-v-6ed29f7f] i,#csbutton[data-v-6ed29f7f] span{display:none!important}#csbutton[data-v-6ed29f7f]::after{content:'AI';font-weight:700;font-size:16px;font-family:-apple-system,sans-serif;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}#zeokdjg[data-v-c3c6b09f]{position:fixed;left:10px;bottom:50vh;z-index:9999}.question_btn[data-v-c3c6b09f]{width:40px;height:40px;border-radius:5px;margin:5px}.question_div[data-v-c3c6b09f]{height:200px}.question_ti[data-v-c3c6b09f]{margin:10px 0 20px}.cx_log[data-v-c3c6b09f]{margin:2px 0;word-break:break-word;white-space:pre-wrap}.status_log[data-v-c3c6b09f]{margin-top:10px}.dialog-footer button[data-v-c3c6b09f]:first-child{margin-right:10px}#csbutton[data-v-c3c6b09f]{position:fixed;bottom:20px;right:20px;z-index:99999;width:44px;height:44px;background:rgba(64,158,255,0.25)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(64,158,255,0.4)!important;border-radius:50%!important;color:#fff!important;box-shadow:0 4px 16px rgba(64,158,255,0.2);transition:all .3s;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:hidden}#csbutton[data-v-c3c6b09f]:hover{background:rgba(64,158,255,0.4)!important;box-shadow:0 6px 22px rgba(64,158,255,0.35);transform:scale(1.06)}#csbutton[data-v-c3c6b09f] svg,#csbutton[data-v-c3c6b09f] i,#csbutton[data-v-c3c6b09f] span{display:none!important}#csbutton[data-v-c3c6b09f]::after{content:'AI';font-weight:700;font-size:16px;font-family:-apple-system,sans-serif;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.el-empty__image{display:none}.el-empty::before{content:'';display:block;width:32px;height:32px;margin:0 auto 8px;border:2px solid rgba(64,158,255,0.3);border-top-color:rgba(64,158,255,0.6);border-radius:50%;animation:cx-spin 1.5s linear infinite}@keyframes cx-spin{to{transform:rotate(360deg)}}.demo-tabs .el-tabs__nav-wrap::after{display:none}.demo-tabs .el-tabs__nav{display:flex!important;justify-content:space-evenly}.demo-tabs .el-tabs__item{flex:1;text-align:center;padding:0 8px!important}.el-button--primary{--el-button-hover-bg-color:var(--el-color-primary)!important;--el-button-hover-border-color:var(--el-color-primary)!important;--el-button-hover-text-color:#fff!important}.el-button.el-button--primary:hover,.el-button.el-button--primary:focus,.el-button.el-button--primary:active{background-color:var(--el-color-primary)!important;border-color:var(--el-color-primary)!important;color:#fff!important;box-shadow:none!important;transition:none!important}.el-dialog,#zeokdjg{user-select:none;-webkit-user-select:none} ");
 
 (async function (vue, pinia$1, ElementPlus, md5, $$1) {
   'use strict';
@@ -76,7 +76,7 @@
   const getConfig = () => {
     const config = _GM_getValue("config");
     return config ? Object.assign({}, defaultConfig$1, config) : defaultConfig$1;
-  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", interval: 5, answerInterval: 5, autoExam: true, thinkingMode: "auto", thinkingLevel: "auto" }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek；支持任意厂商/自建/中转站域名——本脚本已声明 @connect *，首次请求新域名时请在篡改猴弹框点『始终允许所有域』即可永久放行" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash" }, { name: "thinkingMode", label: "思考模式", type: "select", value: defaultConfig$1.thinkingMode, options: [{ value: "auto", label: "默认（不传）" }, { value: "on", label: "开启" }, { value: "off", label: "关闭" }], desc: "默认不传思考参数。开启/关闭分别发送 thinking.type=enabled/disabled；不同厂商字段可能不同，接口不兼容时请保持默认" }, { name: "thinkingLevel", label: "思考强度", type: "select", value: defaultConfig$1.thinkingLevel, options: [{ value: "auto", label: "默认（不传）" }, { value: "low", label: "低" }, { value: "medium", label: "中" }, { value: "high", label: "高" }], desc: "选择后发送 reasoning_effort（low/medium/high）。部分模型/中转站可能不支持，接口报错时请保持默认" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
+  }, defaultConfig$1 = { debugger: false, autoAnswer: true, autoVideo: true, autoJump: true, autoSubmit: true, thtoken: "", aiApiUrl: "", aiModel: "", maxTokens: 4096, interval: 5, answerInterval: 5, autoExam: true, thinkingMode: "auto", thinkingLevel: "auto" }, userConfig = [{ name: "base", label: "接口配置", config: [ { name: "thtoken", label: "API Key", type: "input", value: defaultConfig$1.thtoken, desc: "保存在本地，不会泄露" }, { name: "aiApiUrl", label: "API地址", type: "input", value: defaultConfig$1.aiApiUrl, desc: "留空默认 DeepSeek；填完整 .../chat/completions 或只填 .../v1 均可；支持任意厂商/自建/中转站——首次请求新域名时请在篡改猴弹框点『始终允许所有域』即可永久放行" }, { name: "aiModel", label: "模型名称", type: "input", value: defaultConfig$1.aiModel, desc: "留空默认 deepseek-v4-flash；填好 API 地址和 Key 后会自动获取模型列表，可下拉选择，也可直接输入模型名" }, { name: "maxTokens", label: "最大输出tokens", type: "number", value: defaultConfig$1.maxTokens, desc: "单次回答允许的最大输出 token，默认 4096。出现 finish_reason=length / 输出被截断时调大（如 8192）；若接口报错提示 max_tokens 超限则调低" }, { name: "thinkingMode", label: "思考模式", type: "select", value: defaultConfig$1.thinkingMode, options: [{ value: "auto", label: "默认（不传）" }, { value: "on", label: "开启" }, { value: "off", label: "关闭" }], desc: "默认不传思考参数。开启/关闭分别发送 thinking.type=enabled/disabled；不同厂商字段可能不同，接口不兼容时请保持默认" }, { name: "thinkingLevel", label: "思考强度", type: "select", value: defaultConfig$1.thinkingLevel, options: [{ value: "auto", label: "默认（不传）" }, { value: "low", label: "低" }, { value: "medium", label: "中" }, { value: "high", label: "高" }], desc: "选择后发送 reasoning_effort（low/medium/high）。部分模型/中转站可能不支持，接口报错时请保持默认" }] }, { name: "chapter", label: "章节配置", config: [{ name: "autoAnswer", label: "自动答题", type: "switch", value: defaultConfig$1.autoAnswer, desc: "开启后，会自动答题" }, { name: "autoVideo", label: "自动视频", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动观看视频" }, { name: "autoJump", label: "自动切换", type: "switch", value: defaultConfig$1.autoVideo, desc: "开启后，会自动切换章节" }, { name: "autoSubmit", label: "自动提交", type: "switch", value: defaultConfig$1.autoSubmit, desc: "开启后，会自动提交答案" }, { name: "answerInterval", label: "答题间隔(秒)", type: "number", value: defaultConfig$1.answerInterval, desc: "每道题发送 AI 请求前的等待秒数，默认 5 秒；建议不低于 3 秒，避免接口限流" }] }, { name: "exam", label: "考试配置", config: [{ name: "autoExam", label: "考试自动切换", type: "switch", value: defaultConfig$1.autoExam, desc: "开启后，考试会自动切换" }] }], useformStore = pinia$1.defineStore({ id: "formstore", state: () => ({ forminput: getConfig(), dialogV: false, activeName: "base" }), actions: { saveConfig(forminput) {
     _GM_setValue("config", forminput);
   } } });
   var export_helper_default = (sfc, props) => {
@@ -91,18 +91,132 @@
   var setting_default = export_helper_default(setting_vue_vue_type_script_lang_default, [["render", function(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("svg", _hoisted_1231, _hoisted_3230);
   }], ["__file", "setting.vue"]]);
+  // ===== 模型列表 / 连接测试 =====
+  const DEFAULT_API_URL = "https://api.deepseek.com/v1/chat/completions",
+    modelOptions = vue.reactive([]),
+    modelState = vue.reactive({ loading: false, testing: false });
+  let autoModelTimer = null, modelListKey = "";
+
+  // 同时兼容完整接口地址（.../chat/completions）与 base 地址（.../v1）
+  const apiBase = (apiUrl) => (apiUrl || DEFAULT_API_URL).trim().replace(/\/+$/, "").replace(/\/(?:chat\/completions|models)$/i, ""),
+    chatUrl = (apiUrl) => apiBase(apiUrl) + "/chat/completions",
+    modelsUrl = (apiUrl) => apiBase(apiUrl) + "/models";
+
+  // ===== 面板「运行日志」详细化：ServerApi 等非 UI 代码也能写日志 =====
+  const QTYPE = { 0: "单选", 1: "多选", 2: "填空", 3: "判断", 4: "简答", 5: "名词解释", 6: "论述", 7: "计算" },
+    fmtSec = (ms) => (Math.max(0, Number(ms) || 0) / 1000).toFixed(1) + "s",
+    fmtDur = (sec) => {
+      const s = Math.round(Number(sec));
+      return !isFinite(s) || s < 0 ? "未知" : Math.floor(s / 60) + "分" + (s % 60) + "秒";
+    },
+    brief = (v, n) => {
+      const s = String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+      return s.length > n ? s.slice(0, n) + "…(共" + s.length + "字)" : s;
+    },
+    hostOf = (url) => { try { return new URL(url).host; } catch (e) { return String(url || ""); } },
+    panelLog = (msg, level) => {
+      try {
+        const s = _unsafeWindow && _unsafeWindow._askStore;
+        if (s && typeof s.log === "function") { s.log(msg, level || "info"); return; }
+      } catch (e) {}
+      try { console.log("[日志] " + msg); } catch (e) {}
+    };
+
+  function gmRequest(method, url, apiKey, data, timeout) {
+    return new Promise((resolve, reject) => {
+      _GM_xmlhttpRequest({
+        method,
+        url,
+        headers: data ? { "Content-Type": "application/json", Authorization: "Bearer " + apiKey } : { Authorization: "Bearer " + apiKey },
+        data,
+        timeout,
+        onload: resolve,
+        onerror: () => reject(new Error("网络请求失败：域名未放行或地址不可达")),
+        ontimeout: () => reject(new Error("请求超时"))
+      });
+    });
+  }
+
+  async function fetchModelList(apiUrl, apiKey, silent) {
+    if (!apiKey) {
+      if (!silent) ElementPlus.ElNotification({ title: "获取模型", message: "请先填写 API Key", type: "warning" });
+      return [];
+    }
+    // 同一个地址 + Key 只自动拉取一次，避免输入过程中反复请求
+    const key = apiBase(apiUrl) + "|" + apiKey;
+    if (silent && key === modelListKey) return [];
+    modelListKey = key;
+    modelState.loading = true;
+    try {
+      const res = await gmRequest("GET", modelsUrl(apiUrl), apiKey, null, 15000);
+      if (res.status !== 200) throw new Error("HTTP " + res.status + "：" + (res.responseText || "").substring(0, 120));
+      const j = JSON.parse(res.responseText);
+      const raw = Array.isArray(j.data) ? j.data : Array.isArray(j.models) ? j.models : Array.isArray(j) ? j : [];
+      const ids = [...new Set(raw.map((m) => typeof m === "string" ? m : m && (m.id || m.name || m.model)).filter(Boolean))].sort();
+      if (!ids.length) throw new Error("接口未返回模型列表，可手动输入模型名");
+      modelOptions.splice(0, modelOptions.length, ...ids);
+      if (!silent) ElementPlus.ElNotification({ title: "获取成功", message: "共 " + ids.length + " 个模型，可选择或直接输入", type: "success" });
+      return ids;
+    } catch (e) {
+      console.warn("[模型列表] 获取失败:", e);
+      if (!silent) ElementPlus.ElNotification({ title: "获取模型失败", message: e.message || String(e), type: "error", duration: 6000 });
+      return [];
+    } finally {
+      modelState.loading = false;
+    }
+  }
+
+  async function testModelConnection(apiUrl, apiKey, model) {
+    if (!apiKey) {
+      ElementPlus.ElNotification({ title: "测试连接", message: "请先填写 API Key", type: "warning" });
+      return;
+    }
+    if (!model) {
+      ElementPlus.ElNotification({ title: "测试连接", message: "请先选择或输入模型名称", type: "warning" });
+      return;
+    }
+    modelState.testing = true;
+    const started = Date.now();
+    try {
+      const res = await gmRequest("POST", chatUrl(apiUrl), apiKey, JSON.stringify({ model, stream: false, messages: [{ role: "user", content: "ping" }], max_tokens: 8 }), 25000);
+      if (res.status !== 200) {
+        const reason = res.status === 401 || res.status === 403 ? "API Key 无效或无权限" : "HTTP " + res.status;
+        throw new Error(reason + "：" + (res.responseText || "").substring(0, 160));
+      }
+      let j;
+      try {
+        j = JSON.parse(res.responseText);
+      } catch (e) {
+        throw new Error("响应不是合法 JSON：" + (res.responseText || "").substring(0, 120));
+      }
+      if (!j.choices) throw new Error("响应中没有 choices：" + (res.responseText || "").substring(0, 120));
+      ElementPlus.ElNotification({ title: "连接成功", message: model + " 可用，耗时 " + (Date.now() - started) + "ms", type: "success" });
+    } catch (e) {
+      ElementPlus.ElNotification({ title: "连接失败", message: e.message || String(e), type: "error", duration: 6000 });
+    } finally {
+      modelState.testing = false;
+    }
+  }
+
   const _sfc_main$1 = vue.defineComponent({ components: {}, setup() {
-    const formstoreObj = useformStore(), { forminput, dialogV, activeName } = pinia$1.storeToRefs(formstoreObj), ruleFormRef = vue.ref(), rules = vue.reactive({ interval: [{ required: true, message: "间隔时间不能为空" }, { type: "number", message: "间隔时间必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("间隔时间必须大于等于1") }], answerInterval: [{ required: true, message: "答题间隔不能为空" }, { type: "number", message: "答题间隔必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("答题间隔必须大于等于1") }], token: [{ validator: (rule, value) => {
+    const formstoreObj = useformStore(), { forminput, dialogV, activeName } = pinia$1.storeToRefs(formstoreObj), ruleFormRef = vue.ref(), rules = vue.reactive({ interval: [{ required: true, message: "间隔时间不能为空" }, { type: "number", message: "间隔时间必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("间隔时间必须大于等于1") }], answerInterval: [{ required: true, message: "答题间隔不能为空" }, { type: "number", message: "答题间隔必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("答题间隔必须大于等于1") }], maxTokens: [{ required: true, message: "最大输出tokens不能为空" }, { type: "number", message: "最大输出tokens必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("最大输出tokens必须大于等于1") }], token: [{ validator: (rule, value) => {
       if (value) {
         return /^[a-zA-Z0-9]{6,}$/.test(value) ? Promise.resolve() : Promise.reject("token格式错误");
       }
       return Promise.resolve();
     } }] });
+    const autoFetchModels = () => {
+      if (!forminput.value.thtoken) return;
+      clearTimeout(autoModelTimer);
+      autoModelTimer = setTimeout(() => fetchModelList(forminput.value.aiApiUrl, forminput.value.thtoken, true), 800);
+    };
+    vue.watch(() => [forminput.value.aiApiUrl, forminput.value.thtoken], autoFetchModels);
+    vue.watch(dialogV, (open) => { open && autoFetchModels(); });
     return { dialogV, activeName, ruleFormRef, forminput, rules, submitForm: async (formEl) => {
       formEl && await formEl.validate((valid, fields) => {
         valid && (formstoreObj.saveConfig(forminput.value), ElementPlus.ElNotification({ title: "Success", message: "配置保存成功,请自行刷新页面", type: "success" }), dialogV.value = false);
       });
-    }, userConfig, Setting: setting_default };
+    }, userConfig, Setting: setting_default, modelOptions, modelState, loadModels: () => fetchModelList(forminput.value.aiApiUrl, forminput.value.thtoken, false), testModel: () => testModelConnection(forminput.value.aiApiUrl, forminput.value.thtoken, forminput.value.aiModel) };
   } }), _export_sfc = (sfc, props) => {
     const target = sfc.__vccOpts || sfc;
     for (const [key, val] of props)
@@ -111,7 +225,7 @@
   }, _hoisted_1$1 = { class: "dialog-footer" };
   const App = _export_sfc(_sfc_main$1, [["render", function(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_el_button = vue.resolveComponent("el-button"), _component_el_switch = vue.resolveComponent("el-switch"), _component_el_input = vue.resolveComponent("el-input"), _component_el_input_number = vue.resolveComponent("el-input-number"), _component_el_option = vue.resolveComponent("el-option"), _component_el_select = vue.resolveComponent("el-select"), _component_el_checkbox = vue.resolveComponent("el-checkbox"), _component_el_checkbox_group = vue.resolveComponent("el-checkbox-group"), _component_el_tooltip = vue.resolveComponent("el-tooltip"), _component_el_form_item = vue.resolveComponent("el-form-item"), _component_el_tab_pane = vue.resolveComponent("el-tab-pane"), _component_el_tabs = vue.resolveComponent("el-tabs"), _component_el_form = vue.resolveComponent("el-form"), _component_el_dialog = vue.resolveComponent("el-dialog");
-    return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [vue.createVNode(_component_el_button, { type: "danger", id: "csbutton", icon: _ctx.Setting, circle: "", onClick: _cache[0] || (_cache[0] = ($event) => { const s = _unsafeWindow._askStore; if (s) s.dialogVisible = !s.dialogVisible; else _ctx.dialogV = !_ctx.dialogV; }) }, null, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogV, "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.dialogV = $event), title: "学习通AI学习助手", width: "30%", modal: false, center: "", draggable: "" }, { footer: vue.withCtx(() => [vue.createElementVNode("span", _hoisted_1$1, [vue.createVNode(_component_el_button, { onClick: _cache[2] || (_cache[2] = ($event) => _ctx.dialogV = false) }, { default: vue.withCtx(() => [vue.createTextVNode("取消")]), _: 1 }), vue.createVNode(_component_el_button, { type: "primary", onClick: _cache[3] || (_cache[3] = ($event) => _ctx.submitForm(_ctx.ruleFormRef)) }, { default: vue.withCtx(() => [vue.createTextVNode("保存")]), _: 1 })])]), default: vue.withCtx(() => [vue.createVNode(_component_el_form, { ref: "ruleFormRef", rules: _ctx.rules, model: _ctx.forminput, class: "demo-ruleForm" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tabs, { class: "demo-tabs", modelValue: _ctx.activeName, "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.activeName = $event) }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.userConfig, (item) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { key: item.name, label: item.label, name: item.name }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item.config, (item1) => (vue.openBlock(), vue.createBlock(_component_el_form_item, { label: item1.label, prop: item1.name }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tooltip, { class: "box-item", effect: "dark", content: item1.desc || "", placement: "top" }, { default: vue.withCtx(() => ["switch" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_switch, { key: 0, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "input" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input, { key: 1, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "number" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input_number, { key: 2, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "select" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_select, { key: 3, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, placeholder: "请选择" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2.value, label: item2.label, value: item2.value }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : "checkbox" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_checkbox_group, { key: 4, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_checkbox, { key: item2.value, label: item2.value, name: item2.value }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item2.label), 1)]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : vue.createCommentVNode("", true)]), _: 2 }, 1032, ["content"])]), _: 2 }, 1032, ["label", "prop"]))), 256))]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 1 }, 8, ["modelValue"])]), _: 1 }, 8, ["rules", "model"])]), _: 1 }, 8, ["modelValue"])], 64);
+    return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [vue.createVNode(_component_el_button, { type: "danger", id: "csbutton", icon: _ctx.Setting, circle: "", onClick: _cache[0] || (_cache[0] = ($event) => { const s = _unsafeWindow._askStore; if (s) s.dialogVisible = !s.dialogVisible; else _ctx.dialogV = !_ctx.dialogV; }) }, null, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogV, "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.dialogV = $event), title: "学习通AI学习助手", width: "30%", modal: false, center: "", draggable: "" }, { footer: vue.withCtx(() => [vue.createElementVNode("span", _hoisted_1$1, [vue.createVNode(_component_el_button, { onClick: _cache[2] || (_cache[2] = ($event) => _ctx.dialogV = false) }, { default: vue.withCtx(() => [vue.createTextVNode("取消")]), _: 1 }), vue.createVNode(_component_el_button, { type: "primary", onClick: _cache[3] || (_cache[3] = ($event) => _ctx.submitForm(_ctx.ruleFormRef)) }, { default: vue.withCtx(() => [vue.createTextVNode("保存")]), _: 1 })])]), default: vue.withCtx(() => [vue.createVNode(_component_el_form, { ref: "ruleFormRef", rules: _ctx.rules, model: _ctx.forminput, class: "demo-ruleForm" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tabs, { class: "demo-tabs", modelValue: _ctx.activeName, "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.activeName = $event) }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.userConfig, (item) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { key: item.name, label: item.label, name: item.name }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item.config, (item1) => (vue.openBlock(), vue.createBlock(_component_el_form_item, { label: item1.label, prop: item1.name }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tooltip, { class: "box-item", effect: "dark", content: item1.desc || "", placement: "top" }, { default: vue.withCtx(() => ["aiModel" === item1.name ? (vue.openBlock(), vue.createElementBlock("div", { key: 9, style: { display: "flex", gap: "8px", flexWrap: "wrap", width: "100%" } }, [vue.createVNode(_component_el_select, { modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, filterable: "", "allow-create": "", "default-first-option": "", clearable: "", placeholder: "选择或直接输入模型名称", loading: _ctx.modelState.loading, style: { flex: "1 1 220px" } }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.modelOptions, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2, label: item2, value: item2 }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "loading"]), vue.createVNode(_component_el_button, { size: "small", loading: _ctx.modelState.loading, onClick: () => _ctx.loadModels() }, { default: vue.withCtx(() => [vue.createTextVNode("获取模型")]), _: 1 }), vue.createVNode(_component_el_button, { size: "small", loading: _ctx.modelState.testing, onClick: () => _ctx.testModel() }, { default: vue.withCtx(() => [vue.createTextVNode("测试连接")]), _: 1 })]) ) : "switch" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_switch, { key: 0, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "input" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input, { key: 1, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "number" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input_number, { key: 2, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "select" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_select, { key: 3, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, placeholder: "请选择" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2.value, label: item2.label, value: item2.value }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : "checkbox" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_checkbox_group, { key: 4, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_checkbox, { key: item2.value, label: item2.value, name: item2.value }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item2.label), 1)]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : vue.createCommentVNode("", true)]), _: 2 }, 1032, ["content"])]), _: 2 }, 1032, ["label", "prop"]))), 256))]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 1 }, 8, ["modelValue"])]), _: 1 }, 8, ["rules", "model"])]), _: 1 }, 8, ["modelValue"])], 64);
   }], ["__scopeId", "data-v-6ed29f7f"]]);
   let defaultConfig = getConfig();
   class ServerApi {
@@ -128,12 +242,16 @@
       // ⚠️ 必须与 _callAI 的 timeout 保持一致，故抽成常量，避免两处硬编码漂移。
       const timeoutMs = 90000;
       // 支持多提供商：默认 DeepSeek V4 Flash，也可通过配置指定其他兼容端点
-      const apiUrl = defaultConfig.aiApiUrl || "https://api.deepseek.com/v1/chat/completions";
+      const apiUrl = chatUrl(defaultConfig.aiApiUrl);
       const model = defaultConfig.aiModel || "deepseek-v4-flash";
       const thinkingMode = defaultConfig.thinkingMode || "auto";
       const thinkingLevel = defaultConfig.thinkingLevel || "auto";
+      // 最大输出 tokens：默认 4096，避免长答案被截断（finish_reason=length）
+      const maxTokens = Math.max(1, parseInt(defaultConfig.maxTokens) || 4096);
       const q = (questionData.question || "").toString().trim();
       const type = parseInt(questionData.type);
+      const qno = (window._aiQIdx || 0) + 1;
+      const typeName = QTYPE[type] || ("类型" + type);
       const options = questionData.options || [];
       const optionsText = options.length > 0
         ? options.map((o, i) => String.fromCharCode(65 + i) + ". " + o).join("\n")
@@ -168,8 +286,15 @@
           sysPrompt = "你是超星学习通答题助手。请简洁准确地回答题目。只输出答案，不要多余解释。";
       }
 
-      if (!q) return { form: "AI", answer: "", num: "", usenum: "" };
-      if (!apiKey) { console.warn("[AI答题] API Key 为空"); return { form: "AI", answer: "", num: "", usenum: "" }; }
+      if (!q) {
+        panelLog("[AI跳过] 第" + qno + "题题目内容为空，未发送请求", "error");
+        return { form: "AI", answer: "", num: "", usenum: "" };
+      }
+      if (!apiKey) {
+        panelLog("[AI失败] 第" + qno + "题未配置 API Key，未发送请求", "error");
+        return { form: "AI", answer: "", num: "", usenum: "" };
+      }
+      panelLog("[AI发送] 第" + qno + "题(" + typeName + ") → " + model + " | 超时 " + (timeoutMs / 1000) + "s | 最大输出 " + maxTokens + " tokens | 接口 " + hostOf(apiUrl) + " | 内容: " + brief(userPrompt, 1000), "info");
 
       // 重试循环：最多 3 次，指数退避 2/4/6 秒，429 额外等待 10 秒
       // ★ 超时：允许额外重试 1 次（总共最多 2 次），避免慢模型偶尔抖动就整题无答案。
@@ -187,35 +312,35 @@
       let timeoutRetried = 0;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options, { timeoutMs: timeoutMs, thinkingMode: thinkingMode, thinkingLevel: thinkingLevel });
+          const result = await this._callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options, { timeoutMs: timeoutMs, thinkingMode: thinkingMode, thinkingLevel: thinkingLevel, maxTokens: maxTokens });
           if (result.retry === true) {
             if (result.isTimeout) {
               lastError = result.reason;
               if (timeoutRetried < MAX_TIMEOUT_RETRIES && attempt < MAX_RETRIES) {
                 timeoutRetried++;
-                console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），第" + attempt + "次，将重试 1 次...");
+                panelLog("[AI重试] 第" + qno + "题 请求超时(" + (timeoutMs / 1000) + "s，已等 " + fmtSec(result.elapsedMs) + ")，2s 后重试(" + (attempt + 1) + "/" + MAX_RETRIES + ")", "error");
                 await new Promise(r => setTimeout(r, 2000));
                 continue;
               }
-              console.warn("[AI答题] 请求超时（" + (timeoutMs / 1000) + "s），重试次数已用完，本题按「无答案」处理");
+              panelLog("[AI失败] 第" + qno + "题 请求超时(" + (timeoutMs / 1000) + "s)，重试次数已用完，本题按「无答案」处理", "error");
               break;
             }
             // 429 或其它可重试错误
             const waitSec = result.is429 ? 10 + attempt * 3 : attempt * 2;
-            console.warn("[AI答题] 第" + attempt + "次尝试失败" + (result.is429 ? "(429限流)" : "") + "，" + waitSec + "秒后重试...");
+            panelLog("[AI重试] 第" + qno + "题 第" + attempt + "次失败(" + (result.reason || "HTTP " + (result.status || "?")) + "，耗时 " + fmtSec(result.elapsedMs) + (result.body ? "，响应「" + brief(result.body, 120) + "」" : "") + ")，等待 " + waitSec + "s 后重试(" + (attempt + 1) + "/" + MAX_RETRIES + ")", "error");
             await new Promise(r => setTimeout(r, waitSec * 1000));
             lastError = result.reason;
             continue;
           }
           // 不可重试的错误（如密钥无效）：直接返回，不进入空答案重试
           if (result.noRetry === true) {
-            console.warn("[AI答题] 不可重试的错误，本题按「无答案」处理");
+            panelLog("[AI失败] 第" + qno + "题 " + (result.reason || "不可重试的错误(HTTP " + result.status + ")") + (result.body ? "，响应「" + brief(result.body, 120) + "」" : "") + "，本题按「无答案」处理", "error");
             return result;
           }
           // finish_reason=length 表示输出被 max_tokens 截断：重试，避免把残缺答案交给填题
           if (result.truncated === true) {
             lastError = "finish_reason=length";
-            console.warn("[AI答题] 第" + attempt + "次输出被截断（finish_reason=length，max_tokens=2000）" + (attempt < MAX_RETRIES ? "，准备重试..." : "，已达最大重试次数，保留本次结果"));
+            panelLog("[AI重试] 第" + qno + "题 第" + attempt + "次输出被截断(finish_reason=length，max_tokens=" + maxTokens + "，已等 " + fmtSec(result.elapsedMs) + ")" + (attempt < MAX_RETRIES ? "，等待 " + (attempt * 2) + "s 后重试；可在接口配置调大「最大输出tokens」" : "，已达最大重试次数，保留本次结果；可在接口配置调大「最大输出tokens」"), "error");
             if (attempt < MAX_RETRIES) {
               await new Promise(r => setTimeout(r, attempt * 2000));
               continue;
@@ -224,35 +349,41 @@
           // 成功但未返回答案：重试，避免直接跳过本题
           if (!hasAnswer(result)) {
             lastError = "AI未返回答案";
-            console.warn("[AI答题] 第" + attempt + "次返回空答案，准备重试...");
+            panelLog("[AI重试] 第" + qno + "题 第" + attempt + "次返回空答案(耗时 " + fmtSec(result.elapsedMs) + "，原始返回「" + brief(result.rawAnswer, 80) + "」" + (result.body ? "，响应「" + brief(result.body, 120) + "」" : "") + ")" + (attempt < MAX_RETRIES ? "，等待 " + (attempt * 2) + "s 后重试" : "，已达最大重试次数"), "error");
             if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, attempt * 2000));
             continue;
           }
           // 成功
+          panelLog("[AI接收] 第" + qno + "题(" + typeName + ") 第" + attempt + "次尝试成功，耗时 " + fmtSec(result.elapsedMs) + " | HTTP " + (result.status || 200) + " | finish " + (result.finishReason || "(空)") + " | 原始回答「" + brief(result.rawAnswer, 200) + "」 | 最终答案「" + brief(result.answer, 200) + "」 | token 输入" + (result.num || 0) + "/输出" + (result.usenum || 0), "success");
           return result;
         } catch (e) {
           console.warn("[AI答题] 第" + attempt + "次尝试异常:", e);
+          panelLog("[AI重试] 第" + qno + "题 第" + attempt + "次异常：" + (e && e.message ? e.message : e) + (attempt < MAX_RETRIES ? "，等待 " + (attempt * 2) + "s 后重试" : ""), "error");
           lastError = e;
           if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, attempt * 2000));
         }
       }
       console.error("[AI答题] " + MAX_RETRIES + "次重试全部失败:", lastError);
+      panelLog("[AI失败] 第" + qno + "题 " + MAX_RETRIES + " 次尝试均失败：" + brief(lastError && lastError.message ? lastError.message : lastError, 120) + "，本题按「无答案」处理", "error");
       return { form: "AI", answer: "", num: "", usenum: "" };
     }
 
     // 内部方法：发起单次 AI API 调用
     _callAI(apiUrl, apiKey, model, sysPrompt, userPrompt, type, options) {
       return new Promise((resolve) => {
+        const startedAt = Date.now();
+        const elapsed = () => Date.now() - startedAt;
         // 超时可由调用方经 options.timeoutMs 指定（默认 90s），保证与上层「超时」判定用的是同一个值
         const _timeoutMs = (options && options.timeoutMs) || 90000;
         const _thinkingMode = (options && options.thinkingMode) || "auto";
         const _thinkingLevel = (options && options.thinkingLevel) || "auto";
+        const _maxTokens = Math.max(1, parseInt(options && options.maxTokens) || 4096);
         const payload = {
           model,
           stream: false,
           messages: [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
           temperature: 0.1,
-          max_tokens: 2000
+          max_tokens: _maxTokens
         };
         // 思考模式：默认不传，避免不兼容的接口直接 400；开启/关闭使用通用 thinking.type
         if (_thinkingMode === "on" || _thinkingMode === "off") {
@@ -271,17 +402,17 @@
           onload: (res) => {
             console.log("[AI答题] HTTP", res.status, "长度", (res.responseText||"").length);
             if (res.status === 429 || res.status >= 500) {
-              resolve({ retry: true, is429: true, reason: "HTTP " + res.status + " 服务器过载" });
+              resolve({ retry: true, is429: true, reason: "HTTP " + res.status + " 服务器过载", status: res.status, body: (res.responseText || "").substring(0, 300), elapsedMs: elapsed() });
               return;
             }
             if (res.status !== 200) {
               console.error("[AI答题] 错误响应:", res.status, (res.responseText||"").substring(0, 200));
               // 非429错误直接放弃（如401密钥错误等）
               if (res.status === 401 || res.status === 403) {
-                resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true, noRetry: true });
+                resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true, noRetry: true, status: res.status, body: (res.responseText || "").substring(0, 300), elapsedMs: elapsed() });
                 return;
               }
-              resolve({ retry: true, is429: false, reason: "HTTP " + res.status });
+              resolve({ retry: true, is429: false, reason: "HTTP " + res.status, status: res.status, body: (res.responseText || "").substring(0, 300), elapsedMs: elapsed() });
               return;
             }
             try {
@@ -289,16 +420,17 @@
               const choice = j.choices && j.choices[0];
               const finishReason = (choice && choice.finish_reason) || "";
               let ans = (choice && choice.message && choice.message.content || "").trim();
+              const rawAns = ans;
               // 去除推理模型（DeepSeek-R1 / 思考模式等）残留的思维链标签及其内容，
               // 否则思维链里的英文字母(A/B/C/D)会被误当作选项，导致答案错误或为空
               ans = ans.replace(/[\s\S]*?<\/think>/gi, "").replace(/<\/?(?:think|thinking|reasoning)>/gi, "").trim();
               let emptyAnswer = !ans;
               const truncated = "length" === finishReason;
               console.log("[AI答题] 原始返回:", ans, "| finish_reason:", finishReason || "(空)");
-              if (truncated) console.warn("[AI答题] finish_reason=length，输出被 max_tokens=2000 截断");
+              if (truncated) console.warn("[AI答题] finish_reason=length，输出被 max_tokens=" + _maxTokens + " 截断");
               // 诊断：内容为空多为「输出被 max_tokens 截断」或「输出全部消耗在思维链上」，
               //   此时题目会拿不到答案（页面答案模型必然为空），排查先看这一行。
-              if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=2000 截断，或全部消耗在思维链里）→ 本题将无答案可填");
+              if (!ans) console.warn("[AI答题] 返回内容为空（可能输出被 max_tokens=" + _maxTokens + " 截断，或全部消耗在思维链里）→ 本题将无答案可填");
               // 选择题：字母 → 选项文本映射（matchAnswer 做文本精确匹配）
               if (type === 0) {
                 ans = (ans.match(/[A-Da-d]/) || [])[0] || ans;
@@ -344,12 +476,12 @@
               const completionTokens = usage.completion_tokens || 0;
               const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
               console.log("[AI答题] Token消耗: 输入", promptTokens, "输出", completionTokens, "合计", totalTokens);
-              resolve({ form: "AI", answer: ans, num: promptTokens, usenum: completionTokens, totalTokens: totalTokens, empty: emptyAnswer, finishReason: finishReason, truncated: truncated });
-            } catch (e) { resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true }); }
+              resolve({ form: "AI", answer: ans, num: promptTokens, usenum: completionTokens, totalTokens: totalTokens, empty: emptyAnswer, finishReason: finishReason, truncated: truncated, rawAnswer: rawAns, status: res.status, elapsedMs: elapsed() });
+            } catch (e) { resolve({ form: "AI", answer: "", num: "", usenum: "", empty: true, status: res.status, body: (res.responseText || "").substring(0, 160), elapsedMs: elapsed() }); }
           },
           // 超时标记：由上层决定是否重试（当前策略为最多额外重试 1 次，避免无限等待）
-          onerror: () => { resolve({ retry: true, is429: false, reason: "网络错误" }); },
-          ontimeout: () => { resolve({ retry: true, is429: false, isTimeout: true, reason: "超时" }); }
+          onerror: () => { resolve({ retry: true, is429: false, reason: "网络错误", elapsedMs: elapsed() }); },
+          ontimeout: () => { resolve({ retry: true, is429: false, isTimeout: true, reason: "超时", elapsedMs: elapsed() }); }
         });
       });
     }
@@ -1875,30 +2007,37 @@
   }, update(index, question) {
     this.task.work.questionList[index] = question;
   }, log(msg, level = "info") {
-    this.task.log.length > 20 && this.task.log.shift(), this.task.log.push({ time: (/* @__PURE__ */ new Date()).toLocaleTimeString(), msg, type: level });
+    this.task.log.length > 200 && this.task.log.shift(), this.task.log.push({ time: (/* @__PURE__ */ new Date()).toLocaleTimeString(), msg, type: level });
     // 面板日志以前只进 UI，F12 控制台看不到 → 排查「为什么没提交/为什么判失败」只能靠猜。
     // 这里同步打一份到控制台，前缀 [日志]，错误级别再加 [错误]。
     try { console.log("[日志]" + ("error" === level ? "[错误]" : "success" === level ? "[成功]" : "") + " " + msg); } catch (e) {}
   }, msg(msg) {
     this.task.status = msg;
   } } }), _sfc_main = vue.defineComponent({ setup() {
-    const askstore = useAskStore(), { dialogVisible, count, questionList, task } = pinia$1.storeToRefs(askstore), askActiveName = vue.ref("first"), askActiveNames = vue.ref(["1"]), msg = vue.ref("<h3>本脚本仅用于学习交流，请24h内删除。</h3><br><p style='color:red;'>禁止用于各种非法用途，否则后果自负！</p><br><p>答案由AI大语言模型生成，准确率不保证 100%，请自行判断、评估是否使用。</p><br><p style='font-size:13px;color:#888;'>PS：觉得脚本不错的话，还请给作者点点关注，期待给大家带来更多好用的产品！<br><a href='https://v.douyin.com/f0YirlQE0sI/' target='_blank' style='color:#409eff;text-decoration:none;'>关注作者</a></p>"), formstoreObj = useformStore(), { forminput, dialogV, activeName } = pinia$1.storeToRefs(formstoreObj), ruleFormRef = vue.ref(), rules = vue.reactive({ interval: [{ required: true, message: "间隔时间不能为空" }, { type: "number", message: "间隔时间必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("间隔时间必须大于等于1") }], answerInterval: [{ required: true, message: "答题间隔不能为空" }, { type: "number", message: "答题间隔必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("答题间隔必须大于等于1") }], token: [{ validator: (rule, value) => {
+    const askstore = useAskStore(), { dialogVisible, count, questionList, task } = pinia$1.storeToRefs(askstore), askActiveName = vue.ref("first"), askActiveNames = vue.ref(["1"]), msg = vue.ref("<h3>本脚本仅用于学习交流，请24h内删除。</h3><br><p style='color:red;'>禁止用于各种非法用途，否则后果自负！</p><br><p>答案由AI大语言模型生成，准确率不保证 100%，请自行判断、评估是否使用。</p><br><p style='font-size:13px;color:#888;'>PS：觉得脚本不错的话，还请给作者点点关注，期待给大家带来更多好用的产品！<br><a href='https://v.douyin.com/f0YirlQE0sI/' target='_blank' style='color:#409eff;text-decoration:none;'>关注作者</a></p>"), formstoreObj = useformStore(), { forminput, dialogV, activeName } = pinia$1.storeToRefs(formstoreObj), ruleFormRef = vue.ref(), rules = vue.reactive({ interval: [{ required: true, message: "间隔时间不能为空" }, { type: "number", message: "间隔时间必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("间隔时间必须大于等于1") }], answerInterval: [{ required: true, message: "答题间隔不能为空" }, { type: "number", message: "答题间隔必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("答题间隔必须大于等于1") }], maxTokens: [{ required: true, message: "最大输出tokens不能为空" }, { type: "number", message: "最大输出tokens必须为数字" }, { validator: (rule, value) => value >= 1 ? Promise.resolve() : Promise.reject("最大输出tokens必须大于等于1") }], token: [{ validator: (rule, value) => {
       if (value) {
         return /^[a-zA-Z0-9]{6,}$/.test(value) ? Promise.resolve() : Promise.reject("token格式错误");
       }
       return Promise.resolve();
     } }] });
+    const autoFetchModels = () => {
+      if (!forminput.value.thtoken) return;
+      clearTimeout(autoModelTimer);
+      autoModelTimer = setTimeout(() => fetchModelList(forminput.value.aiApiUrl, forminput.value.thtoken, true), 800);
+    };
+    vue.watch(() => [forminput.value.aiApiUrl, forminput.value.thtoken], autoFetchModels);
+    vue.watch(dialogV, (open) => { open && autoFetchModels(); });
     return { count, dialogVisible, questionList, askActiveName, askActiveNames, task, msg, Aim: aim_default, handleClick: (e) => {
       askstore.select(e);
     }, dialogV, activeName, ruleFormRef, forminput, rules, submitForm: async (formEl) => {
       formEl && await formEl.validate((valid, fields) => {
         valid && (formstoreObj.saveConfig(forminput.value), ElementPlus.ElNotification({ title: "Success", message: "配置保存成功,请自行刷新页面", type: "success" }), dialogV.value = false);
       });
-    }, userConfig, Setting: setting_default };
+    }, userConfig, Setting: setting_default, modelOptions, modelState, loadModels: () => fetchModelList(forminput.value.aiApiUrl, forminput.value.thtoken, false), testModel: () => testModelConnection(forminput.value.aiApiUrl, forminput.value.thtoken, forminput.value.aiModel) };
   } }), _hoisted_1 = { class: "dialog-footer" }, _hoisted_2 = { key: 0 }, _hoisted_3 = { class: "question_div" }, _hoisted_4 = { class: "question_ti" }, _hoisted_5 = { key: 0 }, _hoisted_6 = { key: 1 }, _hoisted_7 = { key: 2 }, _hoisted_8 = ["innerHTML"], _hoisted_9 = { key: 0, style: { "margin-top": "20px" } }, _hoisted_10 = { key: 1 }, _hoisted_11 = { key: 2 }, _hoisted_12 = { height: "100px" }, _hoisted_13 = ["innerHTML"];
   const Ask = _export_sfc(_sfc_main, [["render", function(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_el_button = vue.resolveComponent("el-button"), _component_el_switch = vue.resolveComponent("el-switch"), _component_el_input = vue.resolveComponent("el-input"), _component_el_input_number = vue.resolveComponent("el-input-number"), _component_el_option = vue.resolveComponent("el-option"), _component_el_select = vue.resolveComponent("el-select"), _component_el_checkbox = vue.resolveComponent("el-checkbox"), _component_el_checkbox_group = vue.resolveComponent("el-checkbox-group"), _component_el_tooltip = vue.resolveComponent("el-tooltip"), _component_el_form_item = vue.resolveComponent("el-form-item"), _component_el_tab_pane = vue.resolveComponent("el-tab-pane"), _component_el_tabs = vue.resolveComponent("el-tabs"), _component_el_form = vue.resolveComponent("el-form"), _component_el_dialog = vue.resolveComponent("el-dialog"), _component_el_text = vue.resolveComponent("el-text"), _component_el_skeleton = vue.resolveComponent("el-skeleton"), _component_el_card = vue.resolveComponent("el-card"), _component_el_divider = vue.resolveComponent("el-divider"), _component_el_col = vue.resolveComponent("el-col"), _component_el_row = vue.resolveComponent("el-row"), _component_el_scrollbar = vue.resolveComponent("el-scrollbar"), _component_el_tag = vue.resolveComponent("el-tag"), _component_el_alert = vue.resolveComponent("el-alert"), _component_el_empty = vue.resolveComponent("el-empty");
-    return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [vue.createVNode(_component_el_button, { type: "danger", id: "csbutton", icon: _ctx.Setting, circle: "", onClick: _cache[0] || (_cache[0] = ($event) => { const s = _unsafeWindow._askStore; if (s) s.dialogVisible = !s.dialogVisible; else _ctx.dialogV = !_ctx.dialogV; }) }, null, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogV, "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.dialogV = $event), title: "学习通AI学习助手", width: "30%", modal: false, center: "", draggable: "" }, { footer: vue.withCtx(() => [vue.createElementVNode("span", _hoisted_1, [vue.createVNode(_component_el_button, { onClick: _cache[2] || (_cache[2] = ($event) => _ctx.dialogV = false) }, { default: vue.withCtx(() => [vue.createTextVNode("取消")]), _: 1 }), vue.createVNode(_component_el_button, { type: "primary", onClick: _cache[3] || (_cache[3] = ($event) => _ctx.submitForm(_ctx.ruleFormRef)) }, { default: vue.withCtx(() => [vue.createTextVNode("保存")]), _: 1 })])]), default: vue.withCtx(() => [vue.createVNode(_component_el_form, { ref: "ruleFormRef", rules: _ctx.rules, model: _ctx.forminput, class: "demo-ruleForm" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tabs, { class: "demo-tabs", modelValue: _ctx.activeName, "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.activeName = $event) }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.userConfig, (item) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { key: item.name, label: item.label, name: item.name }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item.config, (item1) => (vue.openBlock(), vue.createBlock(_component_el_form_item, { label: item1.label, prop: item1.name }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tooltip, { class: "box-item", effect: "dark", content: item1.desc || "", placement: "top" }, { default: vue.withCtx(() => ["switch" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_switch, { key: 0, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "input" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input, { key: 1, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "number" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input_number, { key: 2, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "select" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_select, { key: 3, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, placeholder: "请选择" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2.value, label: item2.label, value: item2.value }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : "checkbox" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_checkbox_group, { key: 4, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_checkbox, { key: item2.value, label: item2.value, name: item2.value }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item2.label), 1)]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : vue.createCommentVNode("", true)]), _: 2 }, 1032, ["content"])]), _: 2 }, 1032, ["label", "prop"]))), 256))]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 1 }, 8, ["modelValue"])]), _: 1 }, 8, ["rules", "model"])]), _: 1 }, 8, ["modelValue"]), (vue.openBlock(), vue.createBlock(vue.Teleport, { to: "body" }, [vue.createVNode(_component_el_button, { id: "zeokdjg", type: "success", plain: "", round: "", icon: _ctx.Aim, onClick: _cache[5] || (_cache[5] = ($event) => _ctx.dialogVisible = !_ctx.dialogVisible) }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString("执行任务中" == _ctx.task.name ? "等待任务加载" : "正在完成:" + _ctx.task.name), 1)]), _: 1 }, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogVisible, "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => _ctx.dialogVisible = $event), width: "400px", title: "学习通AI学习助手", modal: false, "append-to-body": false, "lock-scroll": false, center: "", draggable: "" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_button, { style: { "margin-bottom": "20px" }, type: "primary", onClick: _cache[6] || (_cache[6] = ($event) => _ctx.dialogV = !_ctx.dialogV), plain: "" }, { default: vue.withCtx(() => [vue.createTextVNode("打开配置")]), _: 1 }), vue.createVNode(_component_el_text, { class: "mx-1", size: "large", type: "danger" }, { default: vue.withCtx(() => [vue.createTextVNode("")]), _: 1 }), vue.createVNode(_component_el_tabs, { modelValue: _ctx.askActiveName, "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => _ctx.askActiveName = $event), class: "demo-tabs" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tab_pane, { label: "运行框", name: "first" }, { default: vue.withCtx(() => [_ctx.task.work.questionList.length > 0 ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_2, [vue.createElementVNode("div", _hoisted_3, [vue.createVNode(_component_el_card, { shadow: "hover" }, { default: vue.withCtx(() => [vue.createElementVNode("h1", _hoisted_4, [vue.createVNode(_component_el_text, { size: "large", truncated: "" }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(_ctx.task.work.inx + 1 + "." + _ctx.task.work.questionList[_ctx.task.work.inx].question), 1)]), _: 1 })]), _ctx.task.work.questionList[_ctx.task.work.inx].answer ? (vue.openBlock(), vue.createElementBlock("p", _hoisted_6, [vue.createElementVNode("p", null, [vue.createElementVNode("pre", null, vue.toDisplayString(_ctx.task.work.questionList[_ctx.task.work.inx].answer), 1)])])) : (vue.openBlock(), vue.createElementBlock("p", _hoisted_5, [vue.createVNode(_component_el_skeleton, { rows: 3, animated: "" })]))]), _: 1 })]), "考试" != _ctx.task.name ? (vue.openBlock(), vue.createBlock(_component_el_divider, { key: 0 }, { default: vue.withCtx(() => [vue.createTextVNode(" 题号 ")]), _: 1 })) : vue.createCommentVNode("", true), "考试" != _ctx.task.name ? (vue.openBlock(), vue.createBlock(_component_el_scrollbar, { key: 1, height: "100px" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_row, null, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.work.questionList, (item, index) => (vue.openBlock(), vue.createBlock(_component_el_col, { span: 4, key: index }, { default: vue.withCtx(() => [vue.createVNode(_component_el_button, { type: item.status || "info", plain: "", class: "question_btn", onClick: ($event) => _ctx.handleClick(index) }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(index + 1), 1)]), _: 2 }, 1032, ["type", "onClick"])]), _: 2 }, 1024))), 128))]), _: 1 })]), _: 1 })) : vue.createCommentVNode("", true), _ctx.task.work.questionList[_ctx.task.work.inx].allAnswer ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_7, [vue.createVNode(_component_el_divider, null, { default: vue.withCtx(() => [vue.createTextVNode(" 接口返回 ")]), _: 1 }), vue.createVNode(_component_el_tabs, { "tab-position": "left", class: "demo-tabs" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.work.questionList[_ctx.task.work.inx].allAnswer, (item, index) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { label: item.form }, { default: vue.withCtx(() => [vue.createElementVNode("div", null, [vue.createElementVNode("div", { innerHTML: (item.answer || "暂无答案") + "<br><p style = 'color:red;'></p>" }, null, 8, _hoisted_8), null != item.num ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_9, [vue.createElementVNode("div", null, [vue.createVNode(_component_el_tag, { class: "ml-2", type: "success" }, { default: vue.withCtx(() => [vue.createTextVNode("输出Token:" + vue.toDisplayString(item.usenum), 1)]), _: 2 }, 1024)]), vue.createElementVNode("div", null, [vue.createVNode(_component_el_tag, { class: "ml-2", type: "info" }, { default: vue.withCtx(() => [vue.createTextVNode("输入Token:" + vue.toDisplayString(item.num), 1)]), _: 2 }, 1024)])])) : vue.createCommentVNode("", true)])]), _: 2 }, 1032, ["label"]))), 256))]), _: 1 })])) : vue.createCommentVNode("", true)])) : _ctx.task.video.status ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_10, [vue.createVNode(_component_el_alert, { title: "倍速有风险，挂科两行泪", type: "error", center: "", "show-icon": "" }), vue.createVNode(_component_el_text, { class: "mx-1", size: "large", type: "danger" }, { default: vue.withCtx(() => [vue.createTextVNode(" 正在完成视频任务 ")]), _: 1 })])) : (vue.openBlock(), vue.createElementBlock("div", _hoisted_11, [vue.createElementVNode("div", _hoisted_12, [vue.createVNode(_component_el_empty, { description: _ctx.task.name }, null, 8, ["description"])])]))]), _: 1 }), vue.createVNode(_component_el_tab_pane, { label: "运行日志", name: "second" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_scrollbar, { height: "200px" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_row, null, { default: vue.withCtx(() => [vue.createVNode(_component_el_col, { span: 24 }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.log, (item, index) => (vue.openBlock(), vue.createElementBlock("p", { key: index, class: "cx_log" }, [vue.createVNode(_component_el_text, { size: "small", type: "info", class: "mx-1" }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item.time), 1)]), _: 2 }, 1024), vue.createVNode(_component_el_text, { class: "mx-1", type: "info" == item.type ? "" : item.type }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(" " + item.msg), 1)]), _: 2 }, 1032, ["type"])]))), 128))]), _: 1 })]), _: 1 })]), _: 1 })]), _: 1 }), vue.createVNode(_component_el_tab_pane, { label: "声明", name: "msg" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_card, { shadow: "hover" }, { default: vue.withCtx(() => [vue.createElementVNode("div", { innerHTML: _ctx.msg }, null, 8, _hoisted_13)]), _: 1 })]), _: 1 })]), _: 1 }, 8, ["modelValue"]), vue.createElementVNode("p", null, [_ctx.task.status ? (vue.openBlock(), vue.createBlock(_component_el_tag, { key: 0 }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(_ctx.task.status), 1)]), _: 1 })) : vue.createCommentVNode("", true)])]), _: 1 }, 8, ["modelValue"])]))], 64);
+    return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [vue.createVNode(_component_el_button, { type: "danger", id: "csbutton", icon: _ctx.Setting, circle: "", onClick: _cache[0] || (_cache[0] = ($event) => { const s = _unsafeWindow._askStore; if (s) s.dialogVisible = !s.dialogVisible; else _ctx.dialogV = !_ctx.dialogV; }) }, null, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogV, "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.dialogV = $event), title: "学习通AI学习助手", width: "30%", modal: false, center: "", draggable: "" }, { footer: vue.withCtx(() => [vue.createElementVNode("span", _hoisted_1, [vue.createVNode(_component_el_button, { onClick: _cache[2] || (_cache[2] = ($event) => _ctx.dialogV = false) }, { default: vue.withCtx(() => [vue.createTextVNode("取消")]), _: 1 }), vue.createVNode(_component_el_button, { type: "primary", onClick: _cache[3] || (_cache[3] = ($event) => _ctx.submitForm(_ctx.ruleFormRef)) }, { default: vue.withCtx(() => [vue.createTextVNode("保存")]), _: 1 })])]), default: vue.withCtx(() => [vue.createVNode(_component_el_form, { ref: "ruleFormRef", rules: _ctx.rules, model: _ctx.forminput, class: "demo-ruleForm" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tabs, { class: "demo-tabs", modelValue: _ctx.activeName, "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.activeName = $event) }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.userConfig, (item) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { key: item.name, label: item.label, name: item.name }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item.config, (item1) => (vue.openBlock(), vue.createBlock(_component_el_form_item, { label: item1.label, prop: item1.name }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tooltip, { class: "box-item", effect: "dark", content: item1.desc || "", placement: "top" }, { default: vue.withCtx(() => ["aiModel" === item1.name ? (vue.openBlock(), vue.createElementBlock("div", { key: 9, style: { display: "flex", gap: "8px", flexWrap: "wrap", width: "100%" } }, [vue.createVNode(_component_el_select, { modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, filterable: "", "allow-create": "", "default-first-option": "", clearable: "", placeholder: "选择或直接输入模型名称", loading: _ctx.modelState.loading, style: { flex: "1 1 220px" } }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.modelOptions, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2, label: item2, value: item2 }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "loading"]), vue.createVNode(_component_el_button, { size: "small", loading: _ctx.modelState.loading, onClick: () => _ctx.loadModels() }, { default: vue.withCtx(() => [vue.createTextVNode("获取模型")]), _: 1 }), vue.createVNode(_component_el_button, { size: "small", loading: _ctx.modelState.testing, onClick: () => _ctx.testModel() }, { default: vue.withCtx(() => [vue.createTextVNode("测试连接")]), _: 1 })]) ) : "switch" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_switch, { key: 0, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "input" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input, { key: 1, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "number" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_input_number, { key: 2, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, null, 8, ["modelValue", "onUpdate:modelValue"])) : "select" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_select, { key: 3, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event, placeholder: "请选择" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_option, { key: item2.value, label: item2.label, value: item2.value }, null, 8, ["label", "value"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : "checkbox" === item1.type ? (vue.openBlock(), vue.createBlock(_component_el_checkbox_group, { key: 4, modelValue: _ctx.forminput[item1.name], "onUpdate:modelValue": ($event) => _ctx.forminput[item1.name] = $event }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(item1.options, (item2) => (vue.openBlock(), vue.createBlock(_component_el_checkbox, { key: item2.value, label: item2.value, name: item2.value }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item2.label), 1)]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 2 }, 1032, ["modelValue", "onUpdate:modelValue"])) : vue.createCommentVNode("", true)]), _: 2 }, 1032, ["content"])]), _: 2 }, 1032, ["label", "prop"]))), 256))]), _: 2 }, 1032, ["label", "name"]))), 128))]), _: 1 }, 8, ["modelValue"])]), _: 1 }, 8, ["rules", "model"])]), _: 1 }, 8, ["modelValue"]), (vue.openBlock(), vue.createBlock(vue.Teleport, { to: "body" }, [vue.createVNode(_component_el_button, { id: "zeokdjg", type: "success", plain: "", round: "", icon: _ctx.Aim, onClick: _cache[5] || (_cache[5] = ($event) => _ctx.dialogVisible = !_ctx.dialogVisible) }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString("执行任务中" == _ctx.task.name ? "等待任务加载" : "正在完成:" + _ctx.task.name), 1)]), _: 1 }, 8, ["icon"]), vue.createVNode(_component_el_dialog, { modelValue: _ctx.dialogVisible, "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => _ctx.dialogVisible = $event), width: "400px", title: "学习通AI学习助手", modal: false, "append-to-body": false, "lock-scroll": false, center: "", draggable: "" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_button, { style: { "margin-bottom": "20px" }, type: "primary", onClick: _cache[6] || (_cache[6] = ($event) => _ctx.dialogV = !_ctx.dialogV), plain: "" }, { default: vue.withCtx(() => [vue.createTextVNode("打开配置")]), _: 1 }), vue.createVNode(_component_el_text, { class: "mx-1", size: "large", type: "danger" }, { default: vue.withCtx(() => [vue.createTextVNode("")]), _: 1 }), vue.createVNode(_component_el_tabs, { modelValue: _ctx.askActiveName, "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => _ctx.askActiveName = $event), class: "demo-tabs" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_tab_pane, { label: "运行框", name: "first" }, { default: vue.withCtx(() => [_ctx.task.work.questionList.length > 0 ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_2, [vue.createElementVNode("div", _hoisted_3, [vue.createVNode(_component_el_card, { shadow: "hover" }, { default: vue.withCtx(() => [vue.createElementVNode("h1", _hoisted_4, [vue.createVNode(_component_el_text, { size: "large", truncated: "" }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(_ctx.task.work.inx + 1 + "." + _ctx.task.work.questionList[_ctx.task.work.inx].question), 1)]), _: 1 })]), _ctx.task.work.questionList[_ctx.task.work.inx].answer ? (vue.openBlock(), vue.createElementBlock("p", _hoisted_6, [vue.createElementVNode("p", null, [vue.createElementVNode("pre", null, vue.toDisplayString(_ctx.task.work.questionList[_ctx.task.work.inx].answer), 1)])])) : (vue.openBlock(), vue.createElementBlock("p", _hoisted_5, [vue.createVNode(_component_el_skeleton, { rows: 3, animated: "" })]))]), _: 1 })]), "考试" != _ctx.task.name ? (vue.openBlock(), vue.createBlock(_component_el_divider, { key: 0 }, { default: vue.withCtx(() => [vue.createTextVNode(" 题号 ")]), _: 1 })) : vue.createCommentVNode("", true), "考试" != _ctx.task.name ? (vue.openBlock(), vue.createBlock(_component_el_scrollbar, { key: 1, height: "100px" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_row, null, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.work.questionList, (item, index) => (vue.openBlock(), vue.createBlock(_component_el_col, { span: 4, key: index }, { default: vue.withCtx(() => [vue.createVNode(_component_el_button, { type: item.status || "info", plain: "", class: "question_btn", onClick: ($event) => _ctx.handleClick(index) }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(index + 1), 1)]), _: 2 }, 1032, ["type", "onClick"])]), _: 2 }, 1024))), 128))]), _: 1 })]), _: 1 })) : vue.createCommentVNode("", true), _ctx.task.work.questionList[_ctx.task.work.inx].allAnswer ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_7, [vue.createVNode(_component_el_divider, null, { default: vue.withCtx(() => [vue.createTextVNode(" 接口返回 ")]), _: 1 }), vue.createVNode(_component_el_tabs, { "tab-position": "left", class: "demo-tabs" }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.work.questionList[_ctx.task.work.inx].allAnswer, (item, index) => (vue.openBlock(), vue.createBlock(_component_el_tab_pane, { label: item.form }, { default: vue.withCtx(() => [vue.createElementVNode("div", null, [vue.createElementVNode("div", { innerHTML: (item.answer || "暂无答案") + "<br><p style = 'color:red;'></p>" }, null, 8, _hoisted_8), null != item.num ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_9, [vue.createElementVNode("div", null, [vue.createVNode(_component_el_tag, { class: "ml-2", type: "success" }, { default: vue.withCtx(() => [vue.createTextVNode("输出Token:" + vue.toDisplayString(item.usenum), 1)]), _: 2 }, 1024)]), vue.createElementVNode("div", null, [vue.createVNode(_component_el_tag, { class: "ml-2", type: "info" }, { default: vue.withCtx(() => [vue.createTextVNode("输入Token:" + vue.toDisplayString(item.num), 1)]), _: 2 }, 1024)])])) : vue.createCommentVNode("", true)])]), _: 2 }, 1032, ["label"]))), 256))]), _: 1 })])) : vue.createCommentVNode("", true)])) : _ctx.task.video.status ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_10, [vue.createVNode(_component_el_alert, { title: "倍速有风险，挂科两行泪", type: "error", center: "", "show-icon": "" }), vue.createVNode(_component_el_text, { class: "mx-1", size: "large", type: "danger" }, { default: vue.withCtx(() => [vue.createTextVNode(" 正在完成视频任务 ")]), _: 1 })])) : (vue.openBlock(), vue.createElementBlock("div", _hoisted_11, [vue.createElementVNode("div", _hoisted_12, [vue.createVNode(_component_el_empty, { description: _ctx.task.name }, null, 8, ["description"])])]))]), _: 1 }), vue.createVNode(_component_el_tab_pane, { label: "运行日志", name: "second" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_scrollbar, { height: "320px" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_row, null, { default: vue.withCtx(() => [vue.createVNode(_component_el_col, { span: 24 }, { default: vue.withCtx(() => [(vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(_ctx.task.log, (item, index) => (vue.openBlock(), vue.createElementBlock("p", { key: index, class: "cx_log" }, [vue.createVNode(_component_el_text, { size: "small", type: "info", class: "mx-1" }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(item.time), 1)]), _: 2 }, 1024), vue.createVNode(_component_el_text, { class: "mx-1", type: "info" == item.type ? "" : item.type }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(" " + item.msg), 1)]), _: 2 }, 1032, ["type"])]))), 128))]), _: 1 })]), _: 1 })]), _: 1 })]), _: 1 }), vue.createVNode(_component_el_tab_pane, { label: "声明", name: "msg" }, { default: vue.withCtx(() => [vue.createVNode(_component_el_card, { shadow: "hover" }, { default: vue.withCtx(() => [vue.createElementVNode("div", { innerHTML: _ctx.msg }, null, 8, _hoisted_13)]), _: 1 })]), _: 1 })]), _: 1 }, 8, ["modelValue"]), vue.createElementVNode("p", null, [_ctx.task.status ? (vue.openBlock(), vue.createBlock(_component_el_tag, { key: 0 }, { default: vue.withCtx(() => [vue.createTextVNode(vue.toDisplayString(_ctx.task.status), 1)]), _: 1 })) : vue.createCommentVNode("", true)])]), _: 1 }, 8, ["modelValue"])]))], 64);
   }], ["__scopeId", "data-v-c3c6b09f"]]);
   class Cx {
     constructor() {
@@ -1916,6 +2055,14 @@
       const aborted = ctx && "function" == typeof ctx.aborted ? ctx.aborted : function() { return false; };
       this.askStore.reset(), this.askStore.task.name = "视频音频";
       const audio = iframeWindow.document.getElementById("audio_html5_api");
+      const started = Date.now();
+      let lastProgress = started, finishedLogged = false;
+      const logDone = () => {
+        if (finishedLogged) return;
+        finishedLogged = true;
+        this.askStore.log("音频播放完成（任务点完成），耗时 " + fmtSec(Date.now() - started) + "，音频时长 " + fmtDur(audio.duration), "success");
+      };
+      this.askStore.log("音频任务开始：静音播放" + (isFinite(audio.duration) && audio.duration > 0 ? "，时长 " + fmtDur(audio.duration) : "（时长加载中）"), "info");
       return audio.muted = true, audio.autoplay = true, audio.volume = 0, audio.play().then(function() {
         console.log("播放成功");
       }).catch(function(error) {
@@ -1924,11 +2071,16 @@
         } }) : console.error("视频播放失败，原因：", error);
       }), new Promise((resolve) => {
         const intervalId = setInterval(() => {
-          if (aborted()) return clearInterval(intervalId), console.log("[中断] 音频任务已中止"), resolve();
-          audio.ended ? (clearInterval(intervalId), log("监听到音频已完成", "success"), resolve()) : audio.paused && audio.play();
+          if (aborted()) return clearInterval(intervalId), this.askStore.log("音频任务已中止（检测到章节切换），已等待 " + fmtSec(Date.now() - started), "info"), resolve();
+          if (audio.ended) { clearInterval(intervalId), log("监听到音频已完成", "success"), logDone(), resolve(); return; }
+          if (audio.paused) audio.play();
+          if (Date.now() - lastProgress >= 60000) {
+            lastProgress = Date.now();
+            this.askStore.log("音频进度 " + fmtDur(audio.currentTime) + " / " + fmtDur(audio.duration) + "，已等待 " + fmtSec(Date.now() - started), "info");
+          }
         }, 1e3);
         audio.addEventListener("ended", function() {
-          log("监听到音频已完成1", "success"), audio.pause(), clearInterval(intervalId), resolve();
+          log("监听到音频已完成1", "success"), audio.pause(), clearInterval(intervalId), logDone(), resolve();
         });
       });
     }
@@ -1938,15 +2090,28 @@
       await waitElementLoaded(iframeWindow, "#video_html5_api"), console.log("视频加载完成");
       if (aborted()) return void console.log("[中断] 视频任务已中止（章节已切换）");
       const player = iframeWindow.videojs("video_html5_api"), playerButton = iframeWindow.document.querySelector(".vjs-big-play-button");
+      const started = Date.now();
+      let lastProgress = started, finishedLogged = false;
+      const logDone = () => {
+        if (finishedLogged) return;
+        finishedLogged = true;
+        this.askStore.log("视频播放完成（任务点完成），实际等待 " + fmtSec(Date.now() - started) + "，视频时长 " + fmtDur(player.duration()) + "（16x 倍速）", "success");
+      };
+      this.askStore.log("视频任务开始：16x 倍速播放" + (player.currentTime() > 0 ? "，从 " + fmtDur(player.currentTime()) + " 继续" : "") + "，视频时长 " + fmtDur(player.duration()), "info");
       player.muted(true), player.playbackRate(16), player.play(), await new Promise((resolve) => {
         const intervalId = setInterval(() => {
-          if (aborted()) { clearInterval(intervalId); try { player.pause(); } catch (e) {} return void console.log("[中断] 视频任务已中止"), resolve(); }
-          "isUnFinishJob" in iframeWindow && iframeWindow.isUnFinishJob() ? player.paused() && (playerButton == null ? void 0 : playerButton.click()) : (clearInterval(intervalId), resolve());
+          if (aborted()) { clearInterval(intervalId); try { player.pause(); } catch (e) {} return void this.askStore.log("视频任务已中止（检测到章节切换），已等待 " + fmtSec(Date.now() - started), "info"), resolve(); }
+          if (Date.now() - lastProgress >= 60000) {
+            lastProgress = Date.now();
+            const cur = player.currentTime(), dur = player.duration();
+            this.askStore.log("视频进度 " + fmtDur(cur) + " / " + fmtDur(dur) + (dur > 0 ? "（" + Math.floor(cur / dur * 100) + "%）" : "") + "，已等待 " + fmtSec(Date.now() - started), "info");
+          }
+          "isUnFinishJob" in iframeWindow && iframeWindow.isUnFinishJob() ? player.paused() && (playerButton == null ? void 0 : playerButton.click()) : (clearInterval(intervalId), logDone(), resolve());
         }, 1e3), pauseBase = player.pause;
         player.pause = function() {
-          player.currentTime() >= player.duration() && (console.log("视频播放完成"), player.pause = pauseBase, resolve());
+          player.currentTime() >= player.duration() && (console.log("视频播放完成"), logDone(), player.pause = pauseBase, resolve());
         }, player.on("ended", () => {
-          console.log("视频播放完成1"), player.pause = pauseBase, player.pause(), clearInterval(intervalId), resolve();
+          console.log("视频播放完成1"), logDone(), player.pause = pauseBase, player.pause(), clearInterval(intervalId), resolve();
         });
       }), console.log("任务点完成");
     }
@@ -1969,9 +2134,13 @@
           console.log(data), ques.push(data);
         }
         this.askStore.reset(), this.askStore.count = ques.length, this.askStore.task.name = "章节测验";
+        this.askStore.log("开始章节测验：共 " + ques.length + " 题，模型 " + (this.defaultConfig.aiModel || "默认") + "，答题间隔 " + this.defaultConfig.answerInterval + "s", "info");
+        const answerStarted = Date.now();
         for (let i = 0; i < ques.length; i++) {
           if (stopIfAborted("检测到已手动切换章节，中止本章答题")) return void resolve();
-          await sleep(this.defaultConfig.answerInterval), this.askStore.insert(ques[i]), this.askStore.task.work.inx = i;
+          const waitSec = Number(this.defaultConfig.answerInterval) || 0;
+          this.askStore.log("第 " + (i + 1) + "/" + ques.length + " 题准备中：等待 " + waitSec + "s（答题间隔）后发送 AI 请求", "info");
+          await sleep(waitSec), this.askStore.insert(ques[i]), this.askStore.task.work.inx = i;
           // 修复：原脚本只读 window._aiQIdx 从不写入，导致每道题的日志都打印「第 1 题」
           window._aiQIdx = i;
           let data = await getAnswers(ques[i], iframeWindow);
@@ -1980,8 +2149,13 @@
           let aiHasAnswer = data.some(function(d) { var a = d.answer; return a && (typeof a === "string" ? a.length > 0 : a.length > 0); });
           aiHasAnswer && aiAnswered++;
           let tmp = fillAnswer(data, ques[i], Timu[i], iframeWindow);
+          const ansText = flattenAnswers(data).join(" / ");
+          tmp
+            ? this.askStore.log("第 " + (i + 1) + " 题已写入页面：" + brief(ansText, 200), "success")
+            : this.askStore.log("第 " + (i + 1) + " 题写入失败（未匹配到选项/页面未接受），AI答案：" + brief(ansText || "(无)", 200), "error");
           tmp ? (this.askStore.get(i).status = "primary", this.askStore.get(i).answer = tmp, succ++) : (this.askStore.get(i).status = "danger", this.askStore.get(i).answer = "暂无答案"), this.askStore.get(i).dom = Timu[i];
         }
+        this.askStore.log("答题阶段完成：共 " + ques.length + " 题，AI 给出答案 " + aiAnswered + " 题，成功写入页面 " + succ + " 题，耗时 " + fmtSec(Date.now() - answerStarted), aiAnswered === ques.length ? "success" : "error");
         if (stopIfAborted("检测到已手动切换章节，跳过提交")) return void resolve();
         // ★★ 让答案真正写进“页面自己的答案模型”，并在提交前后反复校验 ★★
         // 学习通的校验/提交读的是隐藏域 #answer<qid>，由选项 li 的 onclick=addChoice/addMultipleChoice 写入。
@@ -2092,30 +2266,35 @@
             // ★ 覆盖率过低（多为 API 异常 / 多数题目没取到答案）→ 不再判「提交失败」，
             //   改为与「关闭自动提交」完全一致：调页面原生「临时保存」暂存已有答案，
             //   不算失败、也不阻止跳章（答案已入库不会丢），稍后手动补答并提交即可。
+            const tLow = Date.now();
+            this.askStore.log("AI答案覆盖率过低，改为调用页面「临时保存」暂存，等待页面回执…", "info");
             const savedLow = await this._tempSaveWork(iframeWindow, ctx);
             if ("aborted" === savedLow) return void resolve();
             tempsaved = true;
             this.askStore.log(savedLow === true
-              ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已调用页面「临时保存」暂存当前答案（请稍后手动补充并提交）"
+              ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已调用页面「临时保存」暂存当前答案（耗时 " + fmtSec(Date.now() - tLow) + "，请稍后手动补充并提交）"
               : savedLow === "unknown"
-                ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已请求页面「临时保存」暂存（结果未确认，请稍后核对）"
+                ? "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；已请求页面「临时保存」暂存（等待 " + fmtSec(Date.now() - tLow) + " 未确认，请稍后核对）"
                 : "AI答案覆盖率过低(" + aiAnswered + "/" + ques.length + ")，未提交；本页没有暂存入口，答案仅保留在当前页面，请手动提交",
               "error");
           } else {
             // 把「答案模型状态查询 / 重填」一并交给提交环节：页面刷新会清空答案，提交前必须能自查自补
+            this.askStore.log("开始提交：正在确认答案完整并触发页面提交…", "info");
+            const tSubmit = Date.now();
             const submitted = await this._submitWork(iframeWindow, Object.assign({}, ctx, { choiceState: choiceState, refillChoices: refillChoices }));
+            const submitCost = fmtSec(Date.now() - tSubmit);
             if ("aborted" === submitted) return void resolve();
             if (true === submitted) {
-              this.askStore.log("章节测验已完成", "success");
+              this.askStore.log("章节测验已完成（提交耗时 " + submitCost + "）", "success");
             } else if ("tempsaved" === submitted) {
               // ★ 部分题目没拿到答案（AI 返回空 / 未能写入页面）→ 已改为「临时保存」暂存，与「关闭自动提交」一致：
               //   不算失败、也不阻止跳章（答案已入库不会丢），可稍后手动补答并提交。
               tempsaved = true;
-              this.askStore.log("本章有题目未取得答案，未提交空白卷；已调用页面「临时保存」暂存当前答案，请稍后手动补充并提交", "error");
+              this.askStore.log("本章有题目未取得答案，未提交空白卷；已调用页面「临时保存」暂存当前答案（提交尝试耗时 " + submitCost + "），请稍后手动补充并提交", "error");
             } else if ("unconfirmed" === submitted) {
-              this.askStore.submitFailed = true, this.askStore.log("未能确认提交结果，已停止自动跳章，请手动确认本章提交状态", "error");
+              this.askStore.submitFailed = true, this.askStore.log("未能确认提交结果（已等待 " + submitCost + "），已停止自动跳章，请手动确认本章提交状态", "error");
             } else {
-              this.askStore.submitFailed = true, this.askStore.log("章节测验提交失败，已停止自动跳章，请手动检查并提交", "error");
+              this.askStore.submitFailed = true, this.askStore.log("章节测验提交失败（已等待 " + submitCost + "），已停止自动跳章，请手动检查并提交", "error");
             }
           }
           // ⚠️ 必须用大括号：写成 `if (A) S1; else if (B) S2; else S3, resolve();` 时，
@@ -2132,13 +2311,15 @@
         } else {
           // ★ 关闭「自动提交」→ 调页面原生 noSubmit() 做「临时保存(暂存)」：答案入库，之后可手动提交。
           //   （保留 resolve()：原实现此处没有 resolve()，会让 runningTask 永久为真、轮询死锁）
+          const tSave = Date.now();
+          this.askStore.log("自动提交已关闭，调用页面「临时保存」暂存答案，等待页面回执…", "info");
           const saved = await this._tempSaveWork(iframeWindow, ctx);
           if ("aborted" === saved) return void resolve();
           this.askStore.task.status = "已暂存(未提交)，AI覆盖:" + aiAnswered + "/" + ques.length + (aiAnswered < ques.length ? " 填入:" + succ : "");
           this.askStore.log(saved === true
-            ? "已完成答题；未开启自动提交，已调用页面「临时保存」暂存答案（请稍后手动提交）"
+            ? "已完成答题；未开启自动提交，已调用页面「临时保存」暂存答案（耗时 " + fmtSec(Date.now() - tSave) + "，请稍后手动提交）"
             : saved === "unknown"
-              ? "已完成答题；未开启自动提交，已请求页面「临时保存」暂存（结果未确认，请稍后核对后再手动提交）"
+              ? "已完成答题；未开启自动提交，已请求页面「临时保存」暂存（等待 " + fmtSec(Date.now() - tSave) + " 未确认，请稍后核对后再手动提交）"
               : "已完成答题；未开启自动提交，但本页没有暂存入口，答案仅保留在当前页面，请手动提交",
             saved === false ? "error" : "success");
           resolve();
@@ -2179,7 +2360,7 @@
         } catch (e) {}
       }
       const hasFn = "function" === typeof fn;
-      if (!hasFn && !btn) { console.log("[暂存] 本页未提供 noSubmit()/暂存按钮，答案仅保留在当前页面"); return false; }
+      if (!hasFn && !btn) { console.log("[暂存] 本页未提供 noSubmit()/暂存按钮，答案仅保留在当前页面"); panelLog("[暂存] 本页未提供 noSubmit()/暂存按钮，答案仅保留在当前页面", "error"); return false; }
       if (aborted()) return "aborted";
 
       // ★ 哨兵：暂存完成的判定信号有三条（任一命中即算成功），都必须排除「调用前就存在的旧状态」
@@ -2202,6 +2383,7 @@
         else btn.click();
       } catch (e) {
         console.log("[暂存] 触发异常:", e);
+        panelLog("[暂存] 调用暂存入口异常：" + (e && e.message ? e.message : e), "error");
         try { w.alert = origAlert; } catch (_) {}
         try { delete w[sentinel]; } catch (_) {}
         return false;
@@ -2214,6 +2396,7 @@
       // 暂存失败文案：沿用 _submitWork 里 failRe 的核心项（此处不能跨作用域复用其局部变量，故局部定义精简版）
       const saveFailRe = /(提交失败|作业提交失败|保存失败|出错|异常|请重试|未成功|服务器繁忙|系统繁忙|网络异常|操作失败|账号发生异常|请刷新页面后重试|超过教师限制字数|字数未达到|只能录入不能粘贴)/;
       let ok = false, hardFail = "";
+      const waitStarted = Date.now();
       for (let waited = 0; waited < TEMPSAVE_WAIT_MS; waited += POLL) {
         if (aborted()) { try { w.alert = origAlert; } catch (e) {} try { delete w[sentinel]; } catch (_) {} return "aborted"; }
         // ① 明确失败文案 → 立即判失败（不必等满窗口）
@@ -2228,9 +2411,10 @@
       }
       try { w.alert = origAlert; } catch (e) {}
       try { delete w[sentinel]; } catch (_) {}
-      if (hardFail) { console.log("[暂存] 页面返回失败:", hardFail); return false; }
-      if (ok) { console.log("[暂存] 已确认页面临时保存成功（noSubmit/saveWork，正向回执）"); return true; }
+      if (hardFail) { console.log("[暂存] 页面返回失败:", hardFail); panelLog("[暂存] 页面返回失败：" + brief(hardFail, 160), "error"); return false; }
+      if (ok) { console.log("[暂存] 已确认页面临时保存成功（noSubmit/saveWork，正向回执）"); panelLog("[暂存] 页面已确认保存成功（noSubmit/saveWork 回执），耗时 " + fmtSec(Date.now() - waitStarted), "success"); return true; }
       console.log("[暂存] 已触发暂存但 " + (TEMPSAVE_WAIT_MS / 1000) + "s 内未确认结果（响应慢或被 reload 打断）→ 按「已暂存(未确认)」处理");
+      panelLog("[暂存] 已触发，但等待 " + (TEMPSAVE_WAIT_MS / 1000) + "s 未收到确认（响应慢或被页面刷新打断）→ 按「已暂存(未确认)」处理", "error");
       return "unknown";
     }
     // 提交章节测验：接管页面弹窗 + 真实点击弹层确认 + 等到提交结果，返回是否提交成功
@@ -2392,6 +2576,7 @@
         if (shouldClick) {
           console.log("[提交] 检测到页面弹层(" + label + "):", txt || "(无文案)",
             unfinishedRe.test(txt) ? "【未做完确认框】" : "", btn ? "→ 已自动点击“" + btnName + "”" : "(未找到" + btnName + "按钮)");
+          panelLog("[提交弹层] " + label + "：" + brief(txt || "(无文案)", 120) + (unfinishedRe.test(txt) ? "【未做完确认框】" : "") + (btn ? " → 已点击「" + btnName + "」" : " → 未找到「" + btnName + "」按钮"), btn ? "info" : "error");
         }
         if (shouldClick && btn) { try { btn.click(); } catch (e) { console.log("[提交] 点击" + btnName + "失败:", e); } return { manual: false, label, text: txt, clicked: true, btnName: btnName }; }
         return { manual: false, label, text: txt, clicked: false, btnName: btnName };
@@ -2538,10 +2723,10 @@
             //     于是 submitCheckTimes 弹出的“未做完/确认提交”框永远没人点 → 提交链卡死，
             //     而脚本还会因为读不到“失败/成功”字样误判为提交成功并跳章）
             if (!triggered) {
-              try { if (iframeWindow.btnBlueSubmit) { iframeWindow.btnBlueSubmit(); triggered = true; console.log("[提交] 已调用 btnBlueSubmit()"); } } catch (e) { console.log("[提交] btnBlueSubmit 异常:", e); }
+              try { if (iframeWindow.btnBlueSubmit) { iframeWindow.btnBlueSubmit(); triggered = true; console.log("[提交] 已调用 btnBlueSubmit()"); panelLog("[提交] 第 " + attempt + " 次尝试：已调用页面 btnBlueSubmit() 触发提交", "info"); } } catch (e) { console.log("[提交] btnBlueSubmit 异常:", e); }
             }
             if (!triggered && el > 1200) {
-              try { if (iframeWindow.submitCheckTimes) { iframeWindow.submitCheckTimes(); triggered = true; console.log("[提交] 已调用 submitCheckTimes()"); } } catch (e) { console.log("[提交] submitCheckTimes 异常:", e); }
+              try { if (iframeWindow.submitCheckTimes) { iframeWindow.submitCheckTimes(); triggered = true; console.log("[提交] 已调用 submitCheckTimes()"); panelLog("[提交] 第 " + attempt + " 次尝试：已调用页面 submitCheckTimes() 触发提交", "info"); } } catch (e) { console.log("[提交] submitCheckTimes 异常:", e); }
             }
             if (!triggered && el > 3000) {
               let domBtn = null;
@@ -2553,7 +2738,7 @@
                   if (isVisible(b)) domBtn = b;
                 }
               }
-              if (domBtn) { try { domBtn.click(); triggered = true; console.log("[提交] 已点击页面提交按钮:", sels.join("/")); } catch (e) {} }
+              if (domBtn) { try { domBtn.click(); triggered = true; console.log("[提交] 已点击页面提交按钮:", sels.join("/")); panelLog("[提交] 第 " + attempt + " 次尝试：已点击页面提交按钮（" + sels.join("/") + "）", "info"); } catch (e) {} }
             }
             // ★ 弹层巡检：每轮都查、都点。“您还有未做完的多选题，确认提交吗？”与普通“确认提交？”都必须点掉，
             //   这里永远点确定/提交，绝不当成“取消”（这两个框的确定按钮正是页面发起真正提交的入口）
@@ -2568,14 +2753,14 @@
             // ★ 结果判定
             const failMsg = captured.filter(function(m) { return failRe.test(m); })[0];
             const txt = readText();
-            if (failMsg || failRe.test(txt)) { sawFail = true; failedAny = true; console.log("[提交] 捕获失败提示:", failMsg || txt.slice(0, 120)); break; }
-            if (captured.some(function(m) { return okRe.test(m); }) || okPageRe.test(txt)) { console.log("[提交] 检测到提交成功提示"); ok = true; break; }
+            if (failMsg || failRe.test(txt)) { sawFail = true; failedAny = true; console.log("[提交] 捕获失败提示:", failMsg || txt.slice(0, 120)); panelLog("[提交] 捕获失败提示：" + brief(failMsg || txt.slice(0, 120), 160), "error"); break; }
+            if (captured.some(function(m) { return okRe.test(m); }) || okPageRe.test(txt)) { console.log("[提交] 检测到提交成功提示"); panelLog("[提交] 检测到提交成功提示：" + brief(captured.filter(function(m) { return okRe.test(m); })[0] || "页面文案", 120), "success"); ok = true; break; }
             // 正向证据①：确认层被我们点掉、且之后 2.5 秒内没再冒弹层、也没有失败提示 → 提交确实发出去了
             if (clickedConfirm > 0 && popupClearedAt && Date.now() - popupClearedAt > 2500 && !popupCheck()) {
-              console.log("[提交] 确认弹层已点掉且无失败提示，判定提交成功（最后弹层:", lastPopupText || "(无)", "）"); ok = true; break;
+              console.log("[提交] 确认弹层已点掉且无失败提示，判定提交成功（最后弹层:", lastPopupText || "(无)", "）"); panelLog("[提交] 确认弹层已点掉且无失败提示，判定提交成功（最后弹层：" + brief(lastPopupText || "(无)", 100) + "）", "success"); ok = true; break;
             }
             // 正向证据②：提交后页面自己跳走了（confirmSubmitWork 成功时会 location.href = data.url）
-            if (clickedConfirm > 0 && readFrameHref() !== startHref) { console.log("[提交] 提交后页面已跳转，判定提交成功"); ok = true; break; }
+            if (clickedConfirm > 0 && readFrameHref() !== startHref) { console.log("[提交] 提交后页面已跳转，判定提交成功"); panelLog("[提交] 提交后页面已跳转，判定提交成功", "success"); ok = true; break; }
             await sleepMs(200);
           }
           if (needManual || wasAborted || ok || answersBad) break;
@@ -2662,25 +2847,46 @@
           ques.push(data);
         }
         this.askStore.reset(), this.askStore.count = ques.length, this.askStore.task.name = "作业";
+        this.askStore.log("开始作业：共 " + ques.length + " 题，模型 " + (this.defaultConfig.aiModel || "默认") + "，答题间隔 " + this.defaultConfig.answerInterval + "s", "info");
+        let succ = 0, aiAnswered = 0;
+        const answerStarted = Date.now();
         for (let i = 0; i < ques.length; i++) {
-          await sleep(this.defaultConfig.answerInterval), this.askStore.insert(ques[i]), this.askStore.task.work.inx = i;
+          const waitSec = Number(this.defaultConfig.answerInterval) || 0;
+          this.askStore.log("第 " + (i + 1) + "/" + ques.length + " 题准备中：等待 " + waitSec + "s（答题间隔）后发送 AI 请求", "info");
+          await sleep(waitSec), this.askStore.insert(ques[i]), this.askStore.task.work.inx = i;
+          window._aiQIdx = i;
           let data = await getAnswers(ques[i]);
           this.askStore.get(i).allAnswer = data;
+          const aiHas = data.some(function(d) { var a = d.answer; return a && (typeof a === "string" ? a.length > 0 : a.length > 0); });
+          aiHas && aiAnswered++;
           let tmp = fillAnswer(data, ques[i], Timu[i], _unsafeWindow);
-          tmp ? (this.askStore.get(i).status = "primary", this.askStore.get(i).answer = tmp) : (this.askStore.get(i).status = "danger", this.askStore.get(i).answer = "暂无答案"), this.askStore.get(i).dom = Timu[i];
+          const ansText = flattenAnswers(data).join(" / ");
+          tmp
+            ? this.askStore.log("第 " + (i + 1) + " 题已写入页面：" + brief(ansText, 200), "success")
+            : this.askStore.log("第 " + (i + 1) + " 题写入失败（未匹配到选项/页面未接受），AI答案：" + brief(ansText || "(无)", 200), "error");
+          tmp ? (this.askStore.get(i).status = "primary", this.askStore.get(i).answer = tmp, succ++) : (this.askStore.get(i).status = "danger", this.askStore.get(i).answer = "暂无答案"), this.askStore.get(i).dom = Timu[i];
         }
+        this.askStore.log("作业答题完成：共 " + ques.length + " 题，AI 给出答案 " + aiAnswered + " 题，成功写入页面 " + succ + " 题，耗时 " + fmtSec(Date.now() - answerStarted), aiAnswered === ques.length ? "success" : "error");
       });
     }
     exam() {
       return new Promise(async (resolve) => {
         this.askStore.reset(), this.askStore.count = 1, this.askStore.task.name = "考试";
+        this.askStore.log("开始考试答题：模型 " + (this.defaultConfig.aiModel || "默认") + "，答题间隔 " + this.defaultConfig.answerInterval + "s", "info");
         let data = getQuestion("3", _unsafeWindow.document.body);
         this.askStore.insert(data), this.askStore.task.work.inx = 0;
+        window._aiQIdx = 0;
         let data1 = await getAnswers(data);
         this.askStore.get(0).allAnswer = data1;
         let tmp = fillAnswer(data1, data, document.getElementsByClassName("mark_table")[0], _unsafeWindow);
+        const ansText = flattenAnswers(data1).join(" / ");
+        tmp
+          ? this.askStore.log("第 1 题已写入页面：" + brief(ansText, 200), "success")
+          : this.askStore.log("第 1 题写入失败（未匹配到选项/页面未接受），AI答案：" + brief(ansText || "(无)", 200), "error");
         if (tmp ? (this.askStore.get(0).status = "primary", this.askStore.get(0).answer = tmp) : (this.askStore.get(0).status = "danger", this.askStore.get(0).answer = "暂无答案"), this.defaultConfig.autoExam) {
-          await sleep(this.defaultConfig.answerInterval);
+          const waitSec = Number(this.defaultConfig.answerInterval) || 0;
+          this.askStore.log("等待 " + waitSec + "s 后自动切换到下一题", "info");
+          await sleep(waitSec);
           const nextButton = $('.nextDiv .jb_btn:contains("下一题")');
           nextButton ? nextButton.click() : (this.askStore.log("已完成答题，请自行检查答案填写后自行提交", "success"), this.askStore.task.status = "已完成答题，请自行检查答案填写后自行提交");
         } else
@@ -2689,8 +2895,9 @@
     }
     pdf(iframeWindow) {
       return new Promise(async (resolve) => {
+        this.askStore.log("PDF 文档任务：正在滚动到文档底部", "info");
         const contentWindow = iframeWindow.document.querySelector("#panView").contentWindow;
-        contentWindow.scrollTo(0, contentWindow.document.body.scrollHeight), resolve();
+        contentWindow.scrollTo(0, contentWindow.document.body.scrollHeight), this.askStore.log("PDF 文档已滚动到底部", "success"), resolve();
       });
     }
     async s(iframeWindow) {
@@ -2726,9 +2933,9 @@
       cxModel.askStore.log("脚本初始化成功！", "success");
       // 构建标识：用于从 F12 控制台直接确认“当前实际运行的到底是哪一版脚本”，
       // 专门解决“本地明明改好了、篡改猴里却还是旧副本”的排查难题
-      const BUILD_TAG = "1.2.10-20261103a";
+      const BUILD_TAG = "1.2.11-20261110a";
       try {
-        console.log("[构建] 学习通AI助手 已加载 | version=1.2.10 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / max_tokens=2000 / finish_reason截断重试 / 思考模式+强度可选 / 判断题精确匹配 / timeout=90s(超时额外重试1次) / 空答案自动重试 / 元数据加@connect*(任意API域名可用)");
+        console.log("[构建] 学习通AI助手 已加载 | version=1.2.11 build=" + BUILD_TAG + " | 特征: 全帧递归找确认弹层 / 确定性直写答案模型#answer<qid> / 补写链路已修(改读allAnswer并拍平) / 及格线弹窗点取消(不重做) / 自动答题开关已接入(死开关修复) / 关闭自动提交或答案异常→调noSubmit暂存 / 暂存有三态回执(true/false/unknown,不再谎报) / 最大输出tokens可配(默认4096) / finish_reason截断重试 / 思考模式+强度可选 / 判断题精确匹配 / timeout=90s(超时额外重试1次) / 空答案自动重试 / 元数据加@connect*(任意API域名可用) / 模型列表自动获取+手动选择/输入+连接测试");
       } catch (e) {}
       // ===== 章节任务调度（支持“手动切章抢占”）=====
       // runningTask  是否有章节任务正在执行
@@ -2846,6 +3053,7 @@
               (iframe == null ? void 0 : iframe.src.match(/\/ananas\/modules\/pdf\/index.html/)) ? (log("文档", "error"), iframe && (await waitIframeLoaded(iframe), await cxModel.pdf(iframe.contentWindow), cxModel.askStore.log("pdf任务已完成", "success"))) : (console.log(iframe == null ? void 0 : iframe.src, "未知"), cxModel.askStore.log("未知任务跳过", "success"));
           }
         }
+        cxModel.askStore.log("本节任务点处理完毕，等待 " + formStore.forminput.interval + "s（章节间隔）后检查是否跳章", "info");
         await sleep(formStore.forminput.interval);
         if (aborted()) return bail();
         const curChapterUrl = readChapterUrl() || startChapterUrl;
